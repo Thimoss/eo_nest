@@ -28,54 +28,59 @@ model Category {
   code      String    @unique
   reference String
   location  String
+  sectors   Sector[]  @relation("CategorySectors")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Nullable tanpa @default
+  deletedAt DateTime?
 }
 
 model Sector {
-  id        Int       @id @default(autoincrement())
-  no        String
-  name      String
-  source    String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Nullable tanpa @default
-  items     Item[]    @relation("SectorItems")
+  id         Int       @id @default(autoincrement())
+  no         String    @unique
+  name       String
+  source     String?
+  items      Item[]    @relation("SectorItems")
+  category   Category  @relation("CategorySectors", fields: [categoryId], references: [id])
+  categoryId Int
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@unique([no, categoryId])
 }
 
 model Item {
   id                   Int        @id @default(autoincrement())
   no                   String
   name                 String
-  source               String? // Nullable field
-  minimum              Int? // Nullable field
-  unit                 String? // Nullable field
-  materialPricePerUnit Float? // Nullable field
-  feePerUnit           Float? // Nullable field
+  source               String?
+  minimum              Int?
+  unit                 String?
+  materialPricePerUnit Float?
+  feePerUnit           Float?
   sectorId             Int
   sector               Sector     @relation("SectorItems", fields: [sectorId], references: [id])
   subsItems            SubsItem[] @relation("ItemSubsItems")
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt
-  deletedAt            DateTime? // Nullable tanpa @default
+  deletedAt            DateTime?
 }
 
 model SubsItem {
   id                   Int           @id @default(autoincrement())
   no                   String
   name                 String
-  source               String? // Nullable field
-  minimum              Int? // Nullable field
-  unit                 String? // Nullable field
-  materialPricePerUnit Float? // Nullable field
-  feePerUnit           Float? // Nullable field
+  source               String?
+  minimum              Int?
+  unit                 String?
+  materialPricePerUnit Float?
+  feePerUnit           Float?
   itemId               Int
   item                 Item          @relation("ItemSubsItems", fields: [itemId], references: [id])
   subsSubItems         SubsSubItem[] @relation("SubsItemSubsSubItems")
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
-  deletedAt            DateTime? // Nullable tanpa @default
+  deletedAt            DateTime?
 }
 
 model SubsSubItem {
@@ -90,5 +95,5 @@ model SubsSubItem {
   subsItem             SubsItem  @relation("SubsItemSubsSubItems", fields: [subsItemId], references: [id])
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
-  deletedAt            DateTime? // Nullable tanpa @default
+  deletedAt            DateTime?
 }
