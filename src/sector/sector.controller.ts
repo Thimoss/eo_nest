@@ -35,7 +35,7 @@ export class SectorController {
     return this.sectorService.update(+id, data);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.sectorService.remove(+id);
   }

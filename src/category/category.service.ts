@@ -129,7 +129,7 @@ export class CategoryService {
    */
   async update(id: number, data: UpdateCategoryDto) {
     const generatedSlug: string = this.generateSlug(data.name);
-    // Check if the category with the same slug already exists, excluding the current one
+
     const checkCategoryExistBySlug = await this.prisma.category.findFirst({
       where: {
         slug: generatedSlug,
@@ -140,11 +140,10 @@ export class CategoryService {
     if (checkCategoryExistBySlug) {
       throw new HttpException(
         'Category with this name already registered',
-        HttpStatus.FOUND,
+        HttpStatus.CONFLICT,
       );
     }
 
-    // Check if the category with the same code already exists, excluding the current one
     const checkCategoryExistByCode = await this.prisma.category.findFirst({
       where: {
         code: data.code,
@@ -155,35 +154,35 @@ export class CategoryService {
     if (checkCategoryExistByCode) {
       throw new HttpException(
         'Category with this code already registered',
-        HttpStatus.FOUND,
+        HttpStatus.CONFLICT,
       );
     }
 
-    // Update the category
     const updatedCategory = await this.prisma.category.update({
       where: { id },
       data: {
         ...data,
-        slug: generatedSlug, // Ensure slug is updated based on the name
+        slug: generatedSlug,
       },
     });
 
-    // If the category was successfully updated, return the updated category data
+    const sectors = await this.prisma.sector.findMany({
+      where: { categoryId: id },
+    });
+
+    for (const sector of sectors) {
+      const newNo = `${updatedCategory.code}.${sector.no.split('.')[1]}`;
+      await this.prisma.sector.update({
+        where: { id: sector.id },
+        data: { no: newNo },
+      });
+    }
+
     if (updatedCategory) {
       return {
         statusCode: 200,
         message: 'Update Successful',
-        data: {
-          id: updatedCategory.id,
-          name: updatedCategory.name,
-          slug: updatedCategory.slug,
-          code: updatedCategory.code,
-          reference: updatedCategory.reference,
-          location: updatedCategory.location,
-          createdAt: updatedCategory.createdAt,
-          updatedAt: updatedCategory.updatedAt,
-          deletedAt: updatedCategory.deletedAt, // Include the deletedAt field (nullable)
-        },
+        data: updatedCategory,
       };
     }
   }

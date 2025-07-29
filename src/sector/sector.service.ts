@@ -96,7 +96,21 @@ export class SectorService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} sector`;
+  async remove(id: number) {
+    const sector = await this.prisma.sector.findUnique({
+      where: { id },
+    });
+
+    if (!sector) {
+      throw new HttpException('Sector not found', HttpStatus.NOT_FOUND);
+    }
+
+    await this.prisma.sector.delete({
+      where: { id },
+    });
+    return {
+      statusCode: 200,
+      message: 'Sector removed successfully',
+    };
   }
 }
