@@ -45,8 +45,6 @@ model Sector {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
-
-  @@unique([no, categoryId])
 }
 
 model Item {

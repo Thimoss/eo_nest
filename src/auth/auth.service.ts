@@ -24,7 +24,7 @@ export class AuthService {
     });
 
     if (checkUserExists) {
-      throw new HttpException('User already registered', HttpStatus.FOUND);
+      throw new HttpException('User already registered', HttpStatus.CONFLICT);
     }
     data.password = await hash(data.password, 12);
     const createUser = await this.prisma.user.create({

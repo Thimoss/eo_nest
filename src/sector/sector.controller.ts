@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { SectorService } from './sector.service';
 import { CreateSectorDto } from './dto/create-sector.dto';
 import { UpdateSectorDto } from './dto/update-sector.dto';
@@ -7,9 +15,9 @@ import { UpdateSectorDto } from './dto/update-sector.dto';
 export class SectorController {
   constructor(private readonly sectorService: SectorService) {}
 
-  @Post()
-  create(@Body() createSectorDto: CreateSectorDto) {
-    return this.sectorService.create(createSectorDto);
+  @Post('create')
+  async create(@Body() data: CreateSectorDto) {
+    return this.sectorService.create(data);
   }
 
   @Get()
@@ -22,9 +30,9 @@ export class SectorController {
     return this.sectorService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSectorDto: UpdateSectorDto) {
-    return this.sectorService.update(+id, updateSectorDto);
+  @Patch('update/:id')
+  update(@Param('id') id: string, @Body() data: UpdateSectorDto) {
+    return this.sectorService.update(+id, data);
   }
 
   @Delete(':id')

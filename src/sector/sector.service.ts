@@ -6,35 +6,45 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class SectorService {
   constructor(private readonly prisma: PrismaService) {}
-  async create(createSectorDto: CreateSectorDto) {
-    const { no, name, source, categoryId } = createSectorDto;
+  async create(data: CreateSectorDto) {
+    const { no, name, source, categoryId } = data;
 
-    // Cek apakah sudah ada sektor dengan 'no' yang sama dalam kategori yang sama
-    const existingSector = await this.prisma.sector.findUnique({
-      where: {
-        no_categoryId: {
-          no,
-          categoryId, // Menggunakan kombinasi 'no' dan 'categoryId'
-        },
-      },
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+    if (!category) {
+      throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
+    }
+
+    const sectorNo = `${category.code}.${no}`;
+
+    const existingSector = await this.prisma.sector.findFirst({
+      where: { no: sectorNo },
     });
 
     if (existingSector) {
       throw new HttpException(
-        `Sector with no '${no}' already exists in this category.`,
-        HttpStatus.FOUND,
+        `Sector number ${sectorNo} already exists`,
+        HttpStatus.CONFLICT,
       );
     }
 
-    // Jika tidak ada sektor dengan 'no' yang sama, lanjutkan untuk membuat sektor baru
-    return await this.prisma.sector.create({
+    const createSector = await this.prisma.sector.create({
       data: {
-        no,
+        no: sectorNo,
         name,
         source,
         categoryId,
       },
     });
+
+    if (createSector) {
+      return {
+        statusCode: 200,
+        message: 'Sector created successfully',
+        data: createSector,
+      };
+    }
   }
 
   findAll() {
@@ -45,8 +55,45 @@ export class SectorService {
     return `This action returns a #${id} sector`;
   }
 
-  update(id: number, updateSectorDto: UpdateSectorDto) {
-    return `This action updates a #${id} sector`;
+  async update(id: number, data: UpdateSectorDto) {
+    const { no, name, source, categoryId } = data;
+
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+
+    if (!category) {
+      throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
+    }
+
+    const sectorNo = `${category.code}.${no}`;
+
+    const existingSector = await this.prisma.sector.findFirst({
+      where: { no: sectorNo, NOT: { id } },
+    });
+
+    if (existingSector) {
+      throw new HttpException(
+        `Sector number ${sectorNo} already exists`,
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const updatedSector = await this.prisma.sector.update({
+      where: { id },
+      data: {
+        no: sectorNo,
+        name,
+        source,
+        categoryId,
+      },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Sector updated successfully',
+      data: updatedSector,
+    };
   }
 
   remove(id: number) {
