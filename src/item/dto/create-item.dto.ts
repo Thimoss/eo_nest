@@ -24,7 +24,7 @@ export class CreateItemDto {
   @IsOptional()
   minimum?: number;
 
-  @IsInt()
+  @IsOptional()
   @IsString()
   unit?: string;
 

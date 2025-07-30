@@ -48,8 +48,8 @@ model Sector {
 }
 
 model Item {
-  id                   Int        @id @default(autoincrement())
-  no                   String     @unique
+  id                   Int       @id @default(autoincrement())
+  no                   String    @unique
   name                 String
   source               String?
   minimum              Int?
@@ -58,41 +58,7 @@ model Item {
   feePerUnit           Float?
   singleItem           Boolean
   sectorId             Int
-  sector               Sector     @relation("SectorItems", fields: [sectorId], references: [id])
-  subsItems            SubsItem[] @relation("ItemSubsItems")
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
-  deletedAt            DateTime?
-}
-
-model SubsItem {
-  id                   Int           @id @default(autoincrement())
-  no                   String        @unique
-  name                 String
-  source               String?
-  minimum              Int?
-  unit                 String?
-  materialPricePerUnit Float?
-  feePerUnit           Float?
-  singleItem           Boolean
-  itemId               Int
-  item                 Item          @relation("ItemSubsItems", fields: [itemId], references: [id])
-  subsSubItems         SubsSubItem[] @relation("SubsItemSubsSubItems")
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
-  deletedAt            DateTime?
-}
-
-model SubsSubItem {
-  id                   Int       @id @default(autoincrement())
-  no                   String    @unique
-  name                 String
-  minimum              Int
-  unit                 String
-  materialPricePerUnit Float
-  feePerUnit           Float
-  subsItemId           Int
-  subsItem             SubsItem  @relation("SubsItemSubsSubItems", fields: [subsItemId], references: [id])
+  sector               Sector    @relation("SectorItems", fields: [sectorId], references: [id])
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime?

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { ItemService } from './item.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
@@ -7,9 +15,9 @@ import { UpdateItemDto } from './dto/update-item.dto';
 export class ItemController {
   constructor(private readonly itemService: ItemService) {}
 
-  @Post()
-  create(@Body() createItemDto: CreateItemDto) {
-    return this.itemService.create(createItemDto);
+  @Post('create')
+  create(@Body() data: CreateItemDto) {
+    return this.itemService.create(data);
   }
 
   @Get()

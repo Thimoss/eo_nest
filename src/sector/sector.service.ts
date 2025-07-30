@@ -6,6 +6,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class SectorService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   *
+   * @param data
+   * @returns
+   */
   async create(data: CreateSectorDto) {
     const { no, name, source, categoryId } = data;
 
@@ -55,6 +61,12 @@ export class SectorService {
     return `This action returns a #${id} sector`;
   }
 
+  /**
+   *
+   * @param id
+   * @param data
+   * @returns
+   */
   async update(id: number, data: UpdateSectorDto) {
     const { no, name, source, categoryId } = data;
 
@@ -96,6 +108,11 @@ export class SectorService {
     };
   }
 
+  /**
+   *
+   * @param id
+   * @returns
+   */
   async remove(id: number) {
     const sector = await this.prisma.sector.findUnique({
       where: { id },
