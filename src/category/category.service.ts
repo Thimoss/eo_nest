@@ -117,8 +117,34 @@ export class CategoryService {
    * @param id
    * @returns
    */
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  async findOne(id: number) {
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+      include: {
+        sectors: {
+          orderBy: {
+            no: 'asc', // Order sectors by 'no' in ascending order
+          },
+          include: {
+            items: {
+              orderBy: {
+                no: 'asc', // Order items by 'no' in ascending order within each sector
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!category) {
+      throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
+    }
+
+    return {
+      statusCode: 200,
+      message: 'Category details fetched successfully',
+      data: category,
+    };
   }
 
   /**
@@ -176,6 +202,18 @@ export class CategoryService {
         where: { id: sector.id },
         data: { no: newNo },
       });
+
+      const items = await this.prisma.item.findMany({
+        where: { sectorId: sector.id },
+      });
+
+      for (const item of items) {
+        const newItemNo = `${newNo}.${item.no.split('.')[1]}`;
+        await this.prisma.item.update({
+          where: { id: item.id },
+          data: { no: newItemNo },
+        });
+      }
     }
 
     if (updatedCategory) {

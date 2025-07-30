@@ -34,7 +34,7 @@ export class CategoryController {
     });
   }
 
-  @Get(':id')
+  @Get('detail/:id')
   findOne(@Param('id') id: string) {
     return this.categoryService.findOne(+id);
   }

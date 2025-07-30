@@ -16,7 +16,7 @@ export class ItemController {
   constructor(private readonly itemService: ItemService) {}
 
   @Post('create')
-  create(@Body() data: CreateItemDto) {
+  async create(@Body() data: CreateItemDto) {
     return this.itemService.create(data);
   }
 
@@ -30,13 +30,13 @@ export class ItemController {
     return this.itemService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateItemDto: UpdateItemDto) {
-    return this.itemService.update(+id, updateItemDto);
+  @Patch('update/:id')
+  async update(@Param('id') id: string, @Body() data: UpdateItemDto) {
+    return this.itemService.update(+id, data);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string) {
     return this.itemService.remove(+id);
   }
 }
