@@ -32,7 +32,9 @@ export class ItemService {
       throw new HttpException('Sector not found', HttpStatus.NOT_FOUND);
     }
 
-    const itemNo = `${sector.no}.${no}`;
+    const categoryCode = sector.categoryCode;
+
+    const itemNo = `${no}`;
 
     const existingItem = await this.prisma.item.findFirst({
       where: { no: itemNo },
@@ -51,6 +53,8 @@ export class ItemService {
       source,
       sectorId,
       singleItem,
+      sectorNo: sector.no,
+      categoryCode,
     };
     if (singleItem === false) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -118,8 +122,8 @@ export class ItemService {
     if (!sector) {
       throw new HttpException('Sector not found', HttpStatus.NOT_FOUND);
     }
-
-    const itemNo = `${sector.no}.${no}`;
+    const categoryCode = sector.categoryCode;
+    const itemNo = `${no}`;
 
     const existingItem = await this.prisma.item.findFirst({
       where: { no: itemNo },
@@ -138,6 +142,8 @@ export class ItemService {
       source,
       sectorId,
       singleItem,
+      sectorNo: sector.no,
+      categoryCode,
     };
     if (singleItem === false) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

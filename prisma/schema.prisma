@@ -35,16 +35,17 @@ model Category {
 }
 
 model Sector {
-  id         Int       @id @default(autoincrement())
-  no         String    @unique
-  name       String
-  source     String?
-  items      Item[]    @relation("SectorItems")
-  category   Category  @relation("CategorySectors", fields: [categoryId], references: [id])
-  categoryId Int
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime?
+  id           Int       @id @default(autoincrement())
+  no           String    @unique
+  name         String
+  source       String?
+  items        Item[]    @relation("SectorItems")
+  category     Category  @relation("CategorySectors", fields: [categoryId], references: [id])
+  categoryId   Int
+  categoryCode String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 }
 
 model Item {
@@ -57,6 +58,8 @@ model Item {
   materialPricePerUnit Float?
   feePerUnit           Float?
   singleItem           Boolean
+  categoryCode         String
+  sectorNo             String
   sectorId             Int
   sector               Sector    @relation("SectorItems", fields: [sectorId], references: [id])
   createdAt            DateTime  @default(now())

@@ -192,30 +192,6 @@ export class CategoryService {
       },
     });
 
-    const sectors = await this.prisma.sector.findMany({
-      where: { categoryId: id },
-    });
-
-    for (const sector of sectors) {
-      const newNo = `${updatedCategory.code}.${sector.no.split('.')[1]}`;
-      await this.prisma.sector.update({
-        where: { id: sector.id },
-        data: { no: newNo },
-      });
-
-      const items = await this.prisma.item.findMany({
-        where: { sectorId: sector.id },
-      });
-
-      for (const item of items) {
-        const newItemNo = `${newNo}.${item.no.split('.')[1]}`;
-        await this.prisma.item.update({
-          where: { id: item.id },
-          data: { no: newItemNo },
-        });
-      }
-    }
-
     if (updatedCategory) {
       return {
         statusCode: 200,

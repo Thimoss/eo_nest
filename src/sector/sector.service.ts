@@ -22,7 +22,7 @@ export class SectorService {
       throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
     }
 
-    const sectorNo = `${category.code}.${no}`;
+    const sectorNo = `${no}`;
 
     const existingSector = await this.prisma.sector.findFirst({
       where: { no: sectorNo },
@@ -41,6 +41,7 @@ export class SectorService {
         name,
         source,
         categoryId,
+        categoryCode: category.code,
       },
     });
 
@@ -78,7 +79,7 @@ export class SectorService {
       throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
     }
 
-    const sectorNo = `${category.code}.${no}`;
+    const sectorNo = `${no}`;
 
     const existingSector = await this.prisma.sector.findFirst({
       where: { no: sectorNo, NOT: { id } },
@@ -98,6 +99,7 @@ export class SectorService {
         name,
         source,
         categoryId,
+        categoryCode: category.code,
       },
     });
 
