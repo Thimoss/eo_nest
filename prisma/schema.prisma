@@ -36,7 +36,7 @@ model Category {
 
 model Sector {
   id           Int       @id @default(autoincrement())
-  no           String    @unique
+  no           String
   name         String
   source       String?
   items        Item[]    @relation("SectorItems")
@@ -50,7 +50,7 @@ model Sector {
 
 model Item {
   id                   Int       @id @default(autoincrement())
-  no                   String    @unique
+  no                   String
   name                 String
   source               String?
   minimum              Int?

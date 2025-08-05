@@ -102,12 +102,14 @@ export class CategoryService {
     return {
       statusCode: 200,
       message: 'Categories fetched successfully',
-      data: categories,
-      pagination: {
-        currentPage: page,
-        pageSize: pageSize,
-        totalItems: totalCount,
-        totalPages: Math.ceil(totalCount / pageSize), // Calculate total pages
+      data: {
+        list: categories,
+        pagination: {
+          currentPage: page,
+          pageSize: pageSize,
+          totalItems: totalCount,
+          totalPages: Math.ceil(totalCount / pageSize), // Calculate total pages
+        },
       },
     };
   }
@@ -193,6 +195,22 @@ export class CategoryService {
     });
 
     if (updatedCategory) {
+      await this.prisma.sector.updateMany({
+        where: { categoryId: id },
+        data: { categoryCode: updatedCategory.code },
+      });
+
+      await this.prisma.item.updateMany({
+        where: {
+          sector: {
+            categoryId: id,
+          },
+        },
+        data: {
+          categoryCode: updatedCategory.code,
+        },
+      });
+
       return {
         statusCode: 200,
         message: 'Update Successful',
