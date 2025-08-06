@@ -87,9 +87,9 @@ export class SectorService {
     const existingSector = await this.prisma.sector.findFirst({
       where: {
         no: sectorNo,
-        categoryId: categoryId, // Batasi pencarian hanya dalam kategori ini
+        categoryId: categoryId,
         NOT: {
-          id: id, // Pastikan sektor yang sedang diperbarui tidak dianggap sebagai duplikat
+          id: id,
         },
       },
     });
@@ -101,21 +101,34 @@ export class SectorService {
       );
     }
 
-    const updatedSector = await this.prisma.sector.update({
-      where: { id },
-      data: {
-        no: sectorNo,
-        name,
-        source,
-        categoryId,
-        categoryCode: category.code,
-      },
+    const updatingSector = await this.prisma.$transaction(async (prisma) => {
+      const updatedSector = await prisma.sector.update({
+        where: { id },
+        data: {
+          no: sectorNo,
+          name,
+          source,
+          categoryId,
+          categoryCode: category.code,
+        },
+      });
+
+      await prisma.item.updateMany({
+        where: {
+          sectorId: id,
+        },
+        data: {
+          sectorNo: sectorNo,
+        },
+      });
+
+      return updatedSector;
     });
 
     return {
       statusCode: 200,
-      message: 'Sector updated successfully',
-      data: updatedSector,
+      message: 'Sector and associated items updated successfully',
+      data: updatingSector,
     };
   }
 
