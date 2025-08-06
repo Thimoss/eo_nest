@@ -25,12 +25,15 @@ export class SectorService {
     const sectorNo = `${no}`;
 
     const existingSector = await this.prisma.sector.findFirst({
-      where: { no: sectorNo },
+      where: {
+        no: sectorNo,
+        categoryId: categoryId,
+      },
     });
 
     if (existingSector) {
       throw new HttpException(
-        `Sector number ${sectorNo} already exists`,
+        `Sector number ${sectorNo} already exists in this category`,
         HttpStatus.CONFLICT,
       );
     }
@@ -82,12 +85,18 @@ export class SectorService {
     const sectorNo = `${no}`;
 
     const existingSector = await this.prisma.sector.findFirst({
-      where: { no: sectorNo, NOT: { id } },
+      where: {
+        no: sectorNo,
+        categoryId: categoryId, // Batasi pencarian hanya dalam kategori ini
+        NOT: {
+          id: id, // Pastikan sektor yang sedang diperbarui tidak dianggap sebagai duplikat
+        },
+      },
     });
 
     if (existingSector) {
       throw new HttpException(
-        `Sector number ${sectorNo} already exists`,
+        `Sector number ${sectorNo} already exists in this category`,
         HttpStatus.CONFLICT,
       );
     }
