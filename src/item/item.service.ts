@@ -118,6 +118,10 @@ export class ItemService {
       sectorId,
     } = data;
 
+    if (!sectorId) {
+      throw new HttpException('Sector ID is required', HttpStatus.BAD_REQUEST);
+    }
+
     const sector = await this.prisma.sector.findUnique({
       where: { id: sectorId },
     });
@@ -129,12 +133,18 @@ export class ItemService {
     const itemNo = `${no}`;
 
     const existingItem = await this.prisma.item.findFirst({
-      where: { no: itemNo },
+      where: {
+        no: itemNo,
+        sectorId: sectorId,
+        NOT: {
+          id: id,
+        },
+      },
     });
 
     if (existingItem) {
       throw new HttpException(
-        `Item number ${itemNo} already exists`,
+        `Item number ${itemNo} already exists in this sector`,
         HttpStatus.CONFLICT,
       );
     }
