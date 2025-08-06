@@ -37,12 +37,15 @@ export class ItemService {
     const itemNo = `${no}`;
 
     const existingItem = await this.prisma.item.findFirst({
-      where: { no: itemNo },
+      where: {
+        no: itemNo,
+        sectorId: sectorId,
+      },
     });
 
     if (existingItem) {
       throw new HttpException(
-        `Item number ${itemNo} already exists`,
+        `Item number ${itemNo} already exists in this sector`,
         HttpStatus.CONFLICT,
       );
     }
