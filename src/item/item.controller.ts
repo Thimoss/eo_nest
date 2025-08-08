@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ItemService } from './item.service';
 import { CreateItemDto } from './dto/create-item.dto';
@@ -20,14 +21,9 @@ export class ItemController {
     return this.itemService.create(data);
   }
 
-  @Get()
-  findAll() {
-    return this.itemService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.itemService.findOne(+id);
+  @Get('search')
+  async search(@Query('keyword') keyword: string) {
+    return await this.itemService.searchItems(keyword);
   }
 
   @Patch('update/:id')

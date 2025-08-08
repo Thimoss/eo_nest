@@ -91,12 +91,64 @@ export class ItemService {
     };
   }
 
-  findAll() {
-    return `This action returns all item`;
-  }
+  /**
+   *
+   * @param keyword
+   * @returns
+   */
+  async searchItems(keyword: string) {
+    const items = await this.prisma.item.findMany({
+      where: {
+        singleItem: true,
+        OR: [
+          {
+            name: {
+              contains: keyword,
+              mode: 'insensitive',
+            },
+          },
+          {
+            sector: {
+              name: {
+                contains: keyword,
+                mode: 'insensitive',
+              },
+            },
+          },
+          {
+            sector: {
+              category: {
+                name: {
+                  contains: keyword,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        sector: {
+          include: {
+            category: true,
+          },
+        },
+      },
+      orderBy: [
+        {
+          sectorNo: 'asc',
+        },
+        {
+          no: 'asc',
+        },
+      ],
+    });
 
-  findOne(id: number) {
-    return `This action returns a #${id} item`;
+    return {
+      statusCode: 200,
+      message: 'Items found successfully',
+      data: items,
+    };
   }
 
   /**

@@ -7,11 +7,11 @@ export const detailDocuments = {
   base: 'this is base of example document',
   sheet: [
     {
-      workSectionName: 'this is first work section name of example document',
+      workSectionName: 'this is first work section name of example document', // work section name is input by user on the front end
       noWorkSection: 'I',
       workSectionItems: [
         {
-          jobDescription: 'This is job description items of example document',
+          jobDescription: 'This is job description items of example document', // jobDescription is name from item
           volume: 1, // can increase/decrease
           pricePerUnit: {
             materialPrice: 10000,
@@ -22,10 +22,10 @@ export const detailDocuments = {
             materialPrice: 10000,
             feePrice: 5000,
           },
-          information: 'AHS 2024, Sourcing Harga',
+          information: 'AHS 2024, T.1', //information is combined reference category and categoryCode.sectorNo.no
         },
         {
-          jobDescription: 'This is job description items of example document',
+          jobDescription: 'This is job description items of example document', // jobDescription is name from item
           volume: 2, // can increase/decrease
           pricePerUnit: {
             materialPrice: 20000,
@@ -36,7 +36,7 @@ export const detailDocuments = {
             materialPrice: 10000,
             feePrice: 50000,
           },
-          information: 'AHS 2024, Sourcing Harga',
+          information: 'AHS 2024, P.2.1', //information is combined reference category and categoryCode.sectorNo.no
         },
       ],
       totalPrice: {
@@ -46,11 +46,11 @@ export const detailDocuments = {
       },
     },
     {
-      workSectionName: 'this is first work section name of example document',
+      workSectionName: 'this is first work section name of example document', // work section name is input by user on the front end
       noWorkSection: 'II',
       workSectionItems: [
         {
-          jobDescription: 'This is job description items of example document',
+          jobDescription: 'This is job description items of example document', // jobDescription is name from item
           volume: 1, // can increase/decrease
           pricePerUnit: {
             materialPrice: 10000,
@@ -61,7 +61,7 @@ export const detailDocuments = {
             materialPrice: 10000,
             feePrice: 5000,
           },
-          information: 'AHS 2024, Sourcing Harga',
+          information: 'AHS 2024, T.3.1', //information is combined reference category and categoryCode.sectorNo.no
         },
       ],
       totalPrice: {
