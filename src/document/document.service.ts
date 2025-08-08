@@ -79,12 +79,18 @@ export class DocumentService {
    * @param sortBy
    * @returns
    */
-  async findAll(sortBy: string): Promise<Document[]> {
+  async findAll(sortBy: string) {
     const orderBy = this.getOrderBy(sortBy);
 
-    return this.prisma.document.findMany({
+    const documents = await this.prisma.document.findMany({
       orderBy,
     });
+
+    return {
+      statusCode: 200,
+      message: 'Items found successfully',
+      data: documents,
+    };
   }
 
   /**

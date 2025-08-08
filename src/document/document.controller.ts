@@ -23,7 +23,7 @@ export class DocumentController {
   }
 
   @Get('list')
-  async findAll(@Query('sortBy') sortBy: string): Promise<Document[]> {
+  async findAll(@Query('sortBy') sortBy: string) {
     return this.documentService.findAll(sortBy);
   }
 
