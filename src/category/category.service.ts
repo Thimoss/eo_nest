@@ -72,6 +72,7 @@ export class CategoryService {
       .replace(/\s+/g, '-') // Ganti spasi dengan tanda hubung
       .replace(/-+/g, '-'); // Ganti tanda hubung berlebih dengan satu tanda hubung
   }
+
   /**
    *
    * @param filter

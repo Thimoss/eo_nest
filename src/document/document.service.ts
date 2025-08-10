@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -121,8 +121,19 @@ export class DocumentService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} document`;
+  async findOne(slug: string) {
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+    return {
+      statusCode: 200,
+      message: 'Documents found successfully',
+      data: document,
+    };
   }
 
   update(id: number, updateDocumentDto: UpdateDocumentDto) {

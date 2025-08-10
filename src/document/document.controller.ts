@@ -27,9 +27,9 @@ export class DocumentController {
     return this.documentService.findAll(sortBy);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.documentService.findOne(+id);
+  @Get('detail/:slug')
+  findOne(@Param('slug') slug: string) {
+    return this.documentService.findOne(slug);
   }
 
   @Patch(':id')
