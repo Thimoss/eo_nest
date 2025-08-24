@@ -12,6 +12,7 @@ import { DocumentService } from './document.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { Document } from '@prisma/client';
+import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
 
 @Controller('document')
 export class DocumentController {
@@ -38,6 +39,13 @@ export class DocumentController {
     @Body() updateDocumentDto: UpdateDocumentDto,
   ) {
     return this.documentService.update(+id, updateDocumentDto);
+  }
+  @Patch('update/general-info/:slug')
+  updateGeneralInfo(
+    @Param('slug') slug: string,
+    @Body() updateGeneralDocument: UpdateGeneralDocumentDto,
+  ) {
+    return this.documentService.updateGeneralInfo(slug, updateGeneralDocument);
   }
 
   @Delete(':id')

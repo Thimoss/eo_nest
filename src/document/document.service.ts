@@ -3,6 +3,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Document } from '@prisma/client';
+import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
 
 @Injectable()
 export class DocumentService {
@@ -138,6 +139,42 @@ export class DocumentService {
 
   update(id: number, updateDocumentDto: UpdateDocumentDto) {
     return `This action updates a #${id} document`;
+  }
+
+  /**
+   *
+   * @param slug
+   * @param updateGeneralDocument
+   * @returns
+   */
+  async updateGeneralInfo(
+    slug: string,
+    updateGeneralDocument: UpdateGeneralDocumentDto,
+  ) {
+    const { base, job, location } = updateGeneralDocument;
+
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    const updatedDocument = await this.prisma.document.update({
+      where: { slug },
+      data: {
+        base: base ?? document.base,
+        job: job ?? document.job,
+        location: location ?? document.location,
+      },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Document general info updated successfully',
+      data: updatedDocument,
+    };
   }
 
   remove(id: number) {

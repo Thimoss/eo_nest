@@ -53,7 +53,7 @@ model Item {
   no                   String
   name                 String
   source               String?
-  minimum              Int?
+  minimum              Float?
   unit                 String?
   materialPricePerUnit Float?
   feePerUnit           Float?
@@ -68,56 +68,44 @@ model Item {
 }
 
 model Document {
-  id        Int       @id @default(autoincrement())
-  name      String
-  slug      String    @unique
-  job       String    @default("")
-  location  String    @default("")
-  base      String    @default("")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id          Int          @id @default(autoincrement())
+  name        String
+  slug        String       @unique
+  job         String       @default("")
+  location    String       @default("")
+  base        String       @default("")
+  jobSections JobSection[] @relation("DocumentJobSections")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
 }
 
-// Sheet     Sheet[]  // sheet     Sheet[]   @relation("DocumentSheet")
-model Sheet {
-  id              Int      @id @default(autoincrement())
-  workSectionName String
-  noWorkSection   String
-  documentId      Int
-  totalPriceId    Int
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+model JobSection {
+  id                 Int              @id @default(autoincrement())
+  name               String
+  totalMaterialPrice Float            @default(0)
+  totalFeePrice      Float            @default(0)
+  document           Document         @relation("DocumentJobSections", fields: [documentId], references: [id])
+  documentId         Int
+  itemJobSections    ItemJobSection[] @relation("JobSectionItemJobSections")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  deletedAt          DateTime?
 }
 
-// workSectionItems WorkSectionItem[] @relation("SheetItems")
-// totalPrice       TotalPrice        @relation(fields: [totalPriceId], references: [id])
-// document Document @relation("DocumentSheet", fields: [documentId], references: [id])
-// model WorkSectionItem {
-//   id             Int          @id @default(autoincrement())
-//   jobDescription String
-//   volume         Int
-//   pricePerUnit   PricePerUnit @relation(fields: [pricePerUnitId], references: [id])
-//   pricePerUnitId Int
-//   totalPrice     TotalPrice   @relation(fields: [totalPriceId], references: [id])
-//   totalPriceId   Int
-//   information    String
-//   sheetId        Int
-
-//   sheet Sheet @relation("SheetItems", fields: [sheetId], references: [id])
-// }
-
-// model PricePerUnit {
-//   id              Int               @id @default(autoincrement())
-//   materialPrice   Float
-//   feePrice        Float
-//   WorkSectionItem WorkSectionItem[]
-// }
-
-// model TotalPrice {
-//   id              Int               @id @default(autoincrement())
-//   materialPrice   Float
-//   feePrice        Float
-//   Sheet           Sheet[]
-//   WorkSectionItem WorkSectionItem[]
-// }
+model ItemJobSection {
+  id                   Int        @id @default(autoincrement())
+  name                 String
+  volume               Float
+  minimumVolume        Float
+  materialPricePerUnit Float
+  feePricePerUnit      Float
+  totalMaterialPrice   Float
+  totalFeePrice        Float
+  information          String?
+  jobSection           JobSection @relation("JobSectionItemJobSections", fields: [jobSectionId], references: [id])
+  jobSectionId         Int
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  deletedAt            DateTime?
+}

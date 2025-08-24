@@ -1,0 +1,34 @@
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { JobSectionService } from './job-section.service';
+import { CreateJobSectionDto } from './dto/create-job-section.dto';
+import { UpdateJobSectionDto } from './dto/update-job-section.dto';
+
+@Controller('job-section')
+export class JobSectionController {
+  constructor(private readonly jobSectionService: JobSectionService) {}
+
+  @Post()
+  create(@Body() createJobSectionDto: CreateJobSectionDto) {
+    return this.jobSectionService.create(createJobSectionDto);
+  }
+
+  @Get()
+  findAll() {
+    return this.jobSectionService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.jobSectionService.findOne(+id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateJobSectionDto: UpdateJobSectionDto) {
+    return this.jobSectionService.update(+id, updateJobSectionDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.jobSectionService.remove(+id);
+  }
+}
