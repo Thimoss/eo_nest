@@ -47,15 +47,17 @@ export class JobSectionService {
     }
   }
 
-  findAll() {
-    return `This action returns all jobSection`;
-  }
+  async update(id: number, updateJobSectionDto: UpdateJobSectionDto) {
+    const { name } = updateJobSectionDto;
 
-  findOne(id: number) {
-    return `This action returns a #${id} jobSection`;
-  }
+    const jobSection = await this.prisma.jobSection.findUnique({
+      where: { id },
+    });
 
-  update(id: number, updateJobSectionDto: UpdateJobSectionDto) {
+    if (!jobSection) {
+      throw new HttpException('Job section not found', HttpStatus.NOT_FOUND);
+    }
+
     return `This action updates a #${id} jobSection`;
   }
 
