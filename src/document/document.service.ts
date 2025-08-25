@@ -125,6 +125,13 @@ export class DocumentService {
   async findOne(slug: string) {
     const document = await this.prisma.document.findUnique({
       where: { slug },
+      include: {
+        jobSections: {
+          orderBy: {
+            id: 'asc',
+          },
+        },
+      },
     });
 
     if (!document) {

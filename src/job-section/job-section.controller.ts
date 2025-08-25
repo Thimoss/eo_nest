@@ -7,12 +7,12 @@ import { UpdateJobSectionDto } from './dto/update-job-section.dto';
 export class JobSectionController {
   constructor(private readonly jobSectionService: JobSectionService) {}
 
-  @Post()
+  @Post('create')
   create(@Body() createJobSectionDto: CreateJobSectionDto) {
     return this.jobSectionService.create(createJobSectionDto);
   }
 
-  @Patch(':id')
+  @Patch('update/:id')
   update(
     @Param('id') id: string,
     @Body() updateJobSectionDto: UpdateJobSectionDto,

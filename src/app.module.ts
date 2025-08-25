@@ -9,11 +9,19 @@ import { CategoryModule } from './category/category.module';
 import { SectorModule } from './sector/sector.module';
 import { ItemModule } from './item/item.module';
 import { DocumentModule } from './document/document.module';
-import { JobModule } from './section/job/job.module';
 import { JobSectionModule } from './job-section/job-section.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, PrismaModule, CategoryModule, SectorModule, ItemModule, DocumentModule, JobModule, JobSectionModule],
+  imports: [
+    UsersModule,
+    AuthModule,
+    PrismaModule,
+    CategoryModule,
+    SectorModule,
+    ItemModule,
+    DocumentModule,
+    JobSectionModule,
+  ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

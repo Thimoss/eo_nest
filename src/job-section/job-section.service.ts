@@ -48,7 +48,7 @@ export class JobSectionService {
   }
 
   async update(id: number, updateJobSectionDto: UpdateJobSectionDto) {
-    const { name } = updateJobSectionDto;
+    const { name, documentId } = updateJobSectionDto;
 
     const jobSection = await this.prisma.jobSection.findUnique({
       where: { id },
@@ -58,7 +58,34 @@ export class JobSectionService {
       throw new HttpException('Job section not found', HttpStatus.NOT_FOUND);
     }
 
-    return `This action updates a #${id} jobSection`;
+    const existingJobSection = await this.prisma.jobSection.findFirst({
+      where: {
+        name: name,
+        documentId: documentId,
+      },
+    });
+
+    if (existingJobSection) {
+      throw new HttpException(
+        `Job Section already exists in this document`,
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const updateJobSection = await this.prisma.jobSection.update({
+      where: { id },
+      data: {
+        name,
+      },
+    });
+
+    if (updateJobSection) {
+      return {
+        statusCode: 200,
+        message: 'Job section updated successfully',
+        data: updateJobSection,
+      };
+    }
   }
 
   remove(id: number) {
