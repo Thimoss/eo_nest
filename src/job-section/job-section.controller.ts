@@ -20,7 +20,7 @@ export class JobSectionController {
     return this.jobSectionService.update(+id, updateJobSectionDto);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.jobSectionService.remove(+id);
   }

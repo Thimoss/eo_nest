@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
@@ -23,16 +14,6 @@ export class DocumentController {
     return this.documentService.create(createDocumentDto);
   }
 
-  @Get('list')
-  async findAll(@Query('sortBy') sortBy: string) {
-    return this.documentService.findAll(sortBy);
-  }
-
-  @Get('detail/:slug')
-  findOne(@Param('slug') slug: string) {
-    return this.documentService.findOne(slug);
-  }
-
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -40,6 +21,7 @@ export class DocumentController {
   ) {
     return this.documentService.update(+id, updateDocumentDto);
   }
+
   @Patch('update/general-info/:slug')
   updateGeneralInfo(
     @Param('slug') slug: string,

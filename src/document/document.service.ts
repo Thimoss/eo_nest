@@ -2,7 +2,6 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Document } from '@prisma/client';
 import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
 
 @Injectable()
@@ -42,27 +41,22 @@ export class DocumentService {
    * @returns
    */
   private async generateUniqueSlug(name: string): Promise<string> {
-    // Membuat slug dasar dari nama
     const baseSlug = name
       .toLowerCase()
-      .replace(/\s+/g, '-') // Mengganti spasi dengan "-"
-      .replace(/[^\w-]+/g, '') // Menghapus karakter non-alfanumerik
-      .substring(0, 50); // Membatasi panjang slug
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .substring(0, 50);
 
-    // Mengambil timestamp saat ini
     const timestamp = new Date()
       .toISOString()
       .replace(/[^0-9]/g, '')
-      .substring(0, 14); // Format YYYYMMDDHHMMSS
+      .substring(0, 14);
 
-    let slug = `${baseSlug}-${timestamp}`; // Gabungkan slug dengan timestamp
-
-    // Cek apakah slug sudah ada di database
+    let slug = `${baseSlug}-${timestamp}`;
     let existingDocument = await this.prisma.document.findUnique({
       where: { slug },
     });
 
-    // Jika slug sudah ada, tambahkan angka di belakang slug untuk membuatnya unik
     let count = 1;
     while (existingDocument) {
       slug = `${baseSlug}-${timestamp}-${count}`;
@@ -107,7 +101,6 @@ export class DocumentService {
       least: { updatedAt: 'asc' },
     };
 
-    // Mengembalikan pengaturan orderBy berdasarkan singkatan sortBy
     switch (sortBy) {
       case 'asc':
         return sortOptions.asc;
@@ -118,7 +111,7 @@ export class DocumentService {
       case 'least':
         return sortOptions.least;
       default:
-        return {}; // Jika tidak ada pilihan yang valid, tidak mengurutkan
+        return {};
     }
   }
 
@@ -144,6 +137,7 @@ export class DocumentService {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   update(id: number, updateDocumentDto: UpdateDocumentDto) {
     return `This action updates a #${id} document`;
   }

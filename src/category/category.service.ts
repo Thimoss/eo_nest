@@ -23,7 +23,6 @@ export class CategoryService {
       throw new HttpException('Category already registered', HttpStatus.FOUND);
     }
 
-    // Check if the category with the same code already exists
     const checkCategoryExistByCode = await this.prisma.category.findFirst({
       where: { code: data.code },
     });
@@ -68,9 +67,9 @@ export class CategoryService {
     return name
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\s-]/g, '') // Hapus karakter selain alfanumerik dan spasi
-      .replace(/\s+/g, '-') // Ganti spasi dengan tanda hubung
-      .replace(/-+/g, '-'); // Ganti tanda hubung berlebih dengan satu tanda hubung
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
   }
 
   /**
@@ -87,11 +86,10 @@ export class CategoryService {
           ? { contains: filter.name, mode: 'insensitive' }
           : undefined,
       },
-      skip: (page - 1) * pageSize, // Calculate the offset based on the current page
+      skip: (page - 1) * pageSize,
       take: pageSize,
     });
 
-    // Get the total count of categories for pagination metadata
     const totalCount = await this.prisma.category.count({
       where: {
         name: filter.name
@@ -109,7 +107,7 @@ export class CategoryService {
           currentPage: page,
           pageSize: pageSize,
           totalItems: totalCount,
-          totalPages: Math.ceil(totalCount / pageSize), // Calculate total pages
+          totalPages: Math.ceil(totalCount / pageSize),
         },
       },
     };
@@ -226,22 +224,18 @@ export class CategoryService {
    * @returns
    */
   async remove(id: number) {
-    // Check if the category exists
     const category = await this.prisma.category.findUnique({
       where: { id },
     });
 
     if (!category) {
-      // If category does not exist, throw a 404 error
       throw new HttpException('Category not found', HttpStatus.NOT_FOUND);
     }
 
-    // Delete the category
     await this.prisma.category.delete({
       where: { id },
     });
 
-    // Return a success message after deletion
     return {
       statusCode: 200,
       message: 'Category deleted successfully',

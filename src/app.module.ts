@@ -10,6 +10,7 @@ import { SectorModule } from './sector/sector.module';
 import { ItemModule } from './item/item.module';
 import { DocumentModule } from './document/document.module';
 import { JobSectionModule } from './job-section/job-section.module';
+import { ItemJobSectionModule } from './item-job-section/item-job-section.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { JobSectionModule } from './job-section/job-section.module';
     ItemModule,
     DocumentModule,
     JobSectionModule,
+    ItemJobSectionModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

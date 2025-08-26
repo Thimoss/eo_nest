@@ -88,7 +88,20 @@ export class JobSectionService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} jobSection`;
+  async remove(id: number) {
+    const jobSection = await this.prisma.jobSection.findUnique({
+      where: { id },
+    });
+
+    if (!jobSection) {
+      throw new HttpException('Job section not found', HttpStatus.NOT_FOUND);
+    }
+    await this.prisma.jobSection.delete({
+      where: { id },
+    });
+    return {
+      statusCode: 200,
+      message: 'Job section removed successfully',
+    };
   }
 }

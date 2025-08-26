@@ -102,6 +102,7 @@ model ItemJobSection {
   feePricePerUnit      Float
   totalMaterialPrice   Float
   totalFeePrice        Float
+  unit                 String
   information          String?
   jobSection           JobSection @relation("JobSectionItemJobSections", fields: [jobSectionId], references: [id])
   jobSectionId         Int
