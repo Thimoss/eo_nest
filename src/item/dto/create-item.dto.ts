@@ -34,7 +34,7 @@ export class CreateItemDto {
 
   @IsOptional()
   @IsNumber()
-  feePerUnit?: number;
+  feePricePerUnit?: number;
 
   @IsBoolean()
   @IsNotEmpty()

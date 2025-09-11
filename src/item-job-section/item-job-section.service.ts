@@ -39,8 +39,8 @@ export class ItemJobSectionService {
       );
     }
 
-    const totalMaterialPrice = volume * materialPricePerUnit;
-    const totalFeePrice = volume * feePricePerUnit;
+    const totalMaterialPrice = (materialPricePerUnit / minimumVolume) * volume;
+    const totalFeePrice = (feePricePerUnit / minimumVolume) * volume;
 
     const createItemJobSection = await this.prisma.itemJobSection.create({
       data: {
@@ -103,8 +103,8 @@ export class ItemJobSectionService {
       );
     }
 
-    const totalMaterialPrice = volume * materialPricePerUnit;
-    const totalFeePrice = volume * feePricePerUnit;
+    const totalMaterialPrice = (materialPricePerUnit / minimumVolume) * volume;
+    const totalFeePrice = (feePricePerUnit / minimumVolume) * volume;
 
     const updateItemJobSection = await this.prisma.itemJobSection.update({
       where: { id },

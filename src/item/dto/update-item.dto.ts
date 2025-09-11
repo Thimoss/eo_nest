@@ -36,7 +36,7 @@ export class UpdateItemDto extends PartialType(CreateItemDto) {
 
   @IsOptional()
   @IsNumber()
-  feePerUnit?: number;
+  feePricePerUnit?: number;
 
   @IsBoolean()
   @IsNotEmpty()

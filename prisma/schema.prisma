@@ -40,7 +40,7 @@ model Sector {
   name         String
   source       String?
   items        Item[]    @relation("SectorItems")
-  category     Category  @relation("CategorySectors", fields: [categoryId], references: [id])
+  category     Category  @relation("CategorySectors", fields: [categoryId], references: [id], onDelete: Cascade)
   categoryId   Int
   categoryCode String
   createdAt    DateTime  @default(now())
@@ -56,28 +56,31 @@ model Item {
   minimum              Float?
   unit                 String?
   materialPricePerUnit Float?
-  feePerUnit           Float?
+  feePricePerUnit      Float?
   singleItem           Boolean
   categoryCode         String
   sectorNo             String
   sectorId             Int
-  sector               Sector    @relation("SectorItems", fields: [sectorId], references: [id])
+  sector               Sector    @relation("SectorItems", fields: [sectorId], references: [id], onDelete: Cascade)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime?
 }
 
 model Document {
-  id          Int          @id @default(autoincrement())
-  name        String
-  slug        String       @unique
-  job         String       @default("")
-  location    String       @default("")
-  base        String       @default("")
-  jobSections JobSection[] @relation("DocumentJobSections")
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
+  id                 Int          @id @default(autoincrement())
+  name               String
+  slug               String       @unique
+  job                String       @default("")
+  location           String       @default("")
+  base               String       @default("")
+  totalMaterialPrice Float        @default(0)
+  totalFeePrice      Float        @default(0)
+  totalPrice         Float        @default(0)
+  jobSections        JobSection[] @relation("DocumentJobSections")
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  deletedAt          DateTime?
 }
 
 model JobSection {
@@ -85,7 +88,7 @@ model JobSection {
   name               String
   totalMaterialPrice Float            @default(0)
   totalFeePrice      Float            @default(0)
-  document           Document         @relation("DocumentJobSections", fields: [documentId], references: [id])
+  document           Document         @relation("DocumentJobSections", fields: [documentId], references: [id], onDelete: Cascade)
   documentId         Int
   itemJobSections    ItemJobSection[] @relation("JobSectionItemJobSections")
   createdAt          DateTime         @default(now())
@@ -104,7 +107,7 @@ model ItemJobSection {
   totalFeePrice        Float
   unit                 String
   information          String?
-  jobSection           JobSection @relation("JobSectionItemJobSections", fields: [jobSectionId], references: [id])
+  jobSection           JobSection @relation("JobSectionItemJobSections", fields: [jobSectionId], references: [id], onDelete: Cascade)
   jobSectionId         Int
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt

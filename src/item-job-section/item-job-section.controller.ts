@@ -7,12 +7,12 @@ import { UpdateItemJobSectionDto } from './dto/update-item-job-section.dto';
 export class ItemJobSectionController {
   constructor(private readonly itemJobSectionService: ItemJobSectionService) {}
 
-  @Post()
+  @Post('create')
   create(@Body() createItemJobSectionDto: CreateItemJobSectionDto) {
     return this.itemJobSectionService.create(createItemJobSectionDto);
   }
 
-  @Patch(':id')
+  @Patch('update/:id')
   update(
     @Param('id') id: string,
     @Body() updateItemJobSectionDto: UpdateItemJobSectionDto,
@@ -20,7 +20,7 @@ export class ItemJobSectionController {
     return this.itemJobSectionService.update(+id, updateItemJobSectionDto);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.itemJobSectionService.remove(+id);
   }

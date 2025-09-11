@@ -123,6 +123,13 @@ export class DocumentService {
           orderBy: {
             id: 'asc',
           },
+          include: {
+            itemJobSections: {
+              orderBy: {
+                id: 'asc',
+              },
+            },
+          },
         },
       },
     });
@@ -130,6 +137,46 @@ export class DocumentService {
     if (!document) {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
     }
+
+    for (const jobSection of document.jobSections) {
+      const totalMaterialPriceJob = jobSection.itemJobSections.reduce(
+        (total, item) => {
+          return total + item.totalMaterialPrice;
+        },
+        0,
+      );
+
+      const totalFeePriceJob = jobSection.itemJobSections.reduce(
+        (total, item) => {
+          return total + item.totalFeePrice;
+        },
+        0,
+      );
+
+      // Update total untuk JobSection
+      jobSection.totalMaterialPrice = totalMaterialPriceJob;
+      jobSection.totalFeePrice = totalFeePriceJob;
+    }
+
+    // Menghitung totalMaterialPrice, totalFeePrice, dan totalPrice di Document
+    const totalMaterialPriceDoc = document.jobSections.reduce(
+      (total, section) => {
+        return total + section.totalMaterialPrice;
+      },
+      0,
+    );
+
+    const totalFeePriceDoc = document.jobSections.reduce((total, section) => {
+      return total + section.totalFeePrice;
+    }, 0);
+
+    const totalPriceDoc = totalMaterialPriceDoc + totalFeePriceDoc;
+
+    // Update total di Document
+    document.totalMaterialPrice = totalMaterialPriceDoc;
+    document.totalFeePrice = totalFeePriceDoc;
+    document.totalPrice = totalPriceDoc;
+
     return {
       statusCode: 200,
       message: 'Documents found successfully',

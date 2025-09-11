@@ -19,7 +19,7 @@ export class ItemService {
       minimum,
       unit,
       materialPricePerUnit,
-      feePerUnit,
+      feePricePerUnit,
       singleItem,
       sectorId,
     } = data;
@@ -66,7 +66,7 @@ export class ItemService {
         unit: null,
         minimum: null,
         materialPricePerUnit: null,
-        feePerUnit: null,
+        feePricePerUnit: null,
       };
     } else {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -75,7 +75,7 @@ export class ItemService {
         minimum,
         unit,
         materialPricePerUnit,
-        feePerUnit,
+        feePricePerUnit,
       };
     }
 
@@ -165,7 +165,7 @@ export class ItemService {
       minimum,
       unit,
       materialPricePerUnit,
-      feePerUnit,
+      feePricePerUnit,
       singleItem,
       sectorId,
     } = data;
@@ -217,7 +217,7 @@ export class ItemService {
         unit: null,
         minimum: null,
         materialPricePerUnit: null,
-        feePerUnit: null,
+        feePricePerUnit: null,
       };
     } else {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -226,7 +226,7 @@ export class ItemService {
         minimum,
         unit,
         materialPricePerUnit,
-        feePerUnit,
+        feePricePerUnit,
       };
     }
 
