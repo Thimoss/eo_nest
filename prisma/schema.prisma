@@ -13,12 +13,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String    @unique
+  phoneNumber String
+  password    String
+  role        UserRole
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 }
 
 model Category {
@@ -68,19 +77,29 @@ model Item {
 }
 
 model Document {
-  id                 Int          @id @default(autoincrement())
-  name               String
-  slug               String       @unique
-  job                String       @default("")
-  location           String       @default("")
-  base               String       @default("")
-  totalMaterialPrice Float        @default(0)
-  totalFeePrice      Float        @default(0)
-  totalPrice         Float        @default(0)
-  jobSections        JobSection[] @relation("DocumentJobSections")
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  deletedAt          DateTime?
+  id                         Int          @id @default(autoincrement())
+  name                       String
+  slug                       String       @unique
+  job                        String       @default("")
+  location                   String       @default("")
+  base                       String       @default("")
+  totalMaterialPrice         Float        @default(0)
+  totalFeePrice              Float        @default(0)
+  totalMaterialAndFee        Float        @default(0)
+  totalPrice                 Float        @default(0)
+  totalBenefitsAndRisks      Float        @default(0)
+  percentageBenefitsAndRisks Float        @default(0)
+  recapitulationLocation     String       @default("")
+  preparedByName             String       @default("")
+  preparedByPosition         String       @default("")
+  checkedByName              String       @default("")
+  checkedByPosition          String       @default("")
+  confirmedByName            String       @default("")
+  confirmedByPosition        String       @default("")
+  jobSections                JobSection[] @relation("DocumentJobSections")
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+  deletedAt                  DateTime?
 }
 
 model JobSection {

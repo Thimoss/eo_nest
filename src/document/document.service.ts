@@ -3,6 +3,8 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
+import { UpdatePercentageDto } from './dto/update-percentage.dto';
+import { UpdateDocumentApprovalDto } from './dto/update-document-approval.dto';
 
 @Injectable()
 export class DocumentService {
@@ -170,11 +172,26 @@ export class DocumentService {
       return total + section.totalFeePrice;
     }, 0);
 
-    const totalPriceDoc = totalMaterialPriceDoc + totalFeePriceDoc;
+    const totalMaterialAndFeeDoc = totalMaterialPriceDoc + totalFeePriceDoc;
+
+    const percentage = document.percentageBenefitsAndRisks;
+
+    if (percentage === undefined || percentage === null) {
+      throw new HttpException(
+        'Percentage for benefits and risks is not set',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const totalBenefitsAndRisksDoc =
+      totalMaterialAndFeeDoc * (percentage / 100);
+    const totalPriceDoc = totalMaterialAndFeeDoc + totalBenefitsAndRisksDoc;
 
     // Update total di Document
     document.totalMaterialPrice = totalMaterialPriceDoc;
     document.totalFeePrice = totalFeePriceDoc;
+    document.totalMaterialAndFee = totalMaterialAndFeeDoc;
+    document.totalBenefitsAndRisks = totalBenefitsAndRisksDoc;
     document.totalPrice = totalPriceDoc;
 
     return {
@@ -184,9 +201,38 @@ export class DocumentService {
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  update(id: number, updateDocumentDto: UpdateDocumentDto) {
-    return `This action updates a #${id} document`;
+  /**
+   *
+   * @param id
+   * @param updateDocumentDto
+   * @returns
+   */
+  async update(id: number, updateDocumentDto: UpdateDocumentDto) {
+    const { name } = updateDocumentDto;
+
+    const document = await this.prisma.document.findUnique({
+      where: { id },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    const uniqueSlug = await this.generateUniqueSlug(name);
+
+    const updatedDocument = await this.prisma.document.update({
+      where: { id },
+      data: {
+        name: name ?? document.name,
+        slug: uniqueSlug,
+      },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Document  updated successfully',
+      data: updatedDocument,
+    };
   }
 
   /**
@@ -225,7 +271,107 @@ export class DocumentService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} document`;
+  async updatePercentage(
+    slug: string,
+    updatePercentageDto: UpdatePercentageDto,
+  ) {
+    // Find the document by slug
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+    });
+
+    // If document is not found, throw an exception
+    if (!document) {
+      throw new Error('Document not found');
+    }
+
+    // Update the percentageBenefitsAndRisks in the document
+    const updatedDocument = await this.prisma.document.update({
+      where: { slug },
+      data: {
+        percentageBenefitsAndRisks:
+          updatePercentageDto.percentageBenefitsAndRisks,
+      },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Percentage benefits and risks updated successfully',
+      data: updatedDocument,
+    };
+  }
+
+  /**
+   *
+   * @param slug
+   * @param updateDocumentApproval
+   * @returns
+   */
+  async updateApproval(
+    slug: string,
+    updateDocumentApproval: UpdateDocumentApprovalDto,
+  ) {
+    const {
+      recapitulationLocation,
+      preparedByName,
+      preparedByPosition,
+      checkedByName,
+      checkedByPosition,
+      confirmedByName,
+      confirmedByPosition,
+    } = updateDocumentApproval;
+
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    const updatedDocument = await this.prisma.document.update({
+      where: { slug },
+      data: {
+        recapitulationLocation:
+          recapitulationLocation ?? document.recapitulationLocation,
+        preparedByName: preparedByName ?? document.preparedByName,
+        preparedByPosition: preparedByPosition ?? document.preparedByPosition,
+        checkedByName: checkedByName ?? document.checkedByName,
+        checkedByPosition: checkedByPosition ?? document.checkedByPosition,
+        confirmedByName: confirmedByName ?? document.confirmedByName,
+        confirmedByPosition:
+          confirmedByPosition ?? document.confirmedByPosition,
+      },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Document approval updated successfully',
+      data: updatedDocument,
+    };
+  }
+
+  /**
+   *
+   * @param id
+   * @returns
+   */
+  async remove(id: number) {
+    const category = await this.prisma.document.findUnique({
+      where: { id },
+    });
+
+    if (!category) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    await this.prisma.document.delete({
+      where: { id },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Document deleted successfully',
+    };
   }
 }

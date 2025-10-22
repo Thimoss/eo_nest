@@ -1,11 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -18,7 +11,5 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  @MinLength(6)
-  @MaxLength(20)
-  password: string;
+  phoneNumber: string;
 }

@@ -7,14 +7,18 @@ import {
   Delete,
   Get,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
-import { Document } from '@prisma/client';
 import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
+import { UpdatePercentageDto } from './dto/update-percentage.dto';
+import { UpdateDocumentApprovalDto } from './dto/update-document-approval.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('document')
+@UseGuards(AuthGuard)
 export class DocumentController {
   constructor(private readonly documentService: DocumentService) {}
 
@@ -33,7 +37,7 @@ export class DocumentController {
     return this.documentService.findOne(slug);
   }
 
-  @Patch(':id')
+  @Patch('update/:id')
   update(
     @Param('id') id: string,
     @Body() updateDocumentDto: UpdateDocumentDto,
@@ -49,7 +53,23 @@ export class DocumentController {
     return this.documentService.updateGeneralInfo(slug, updateGeneralDocument);
   }
 
-  @Delete(':id')
+  @Patch('update/percentage/:slug')
+  updatePercentageProject(
+    @Param('slug') slug: string,
+    @Body() updatePercentageDto: UpdatePercentageDto,
+  ) {
+    return this.documentService.updatePercentage(slug, updatePercentageDto);
+  }
+
+  @Patch('update/approval/:slug')
+  updateApproval(
+    @Param('slug') slug: string,
+    @Body() updateDocumentApproval: UpdateDocumentApprovalDto,
+  ) {
+    return this.documentService.updateApproval(slug, updateDocumentApproval);
+  }
+
+  @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.documentService.remove(+id);
   }

@@ -6,16 +6,4 @@ export class UpdateDocumentDto extends PartialType(CreateDocumentDto) {
   @IsOptional()
   @IsString()
   name: string;
-
-  @IsOptional()
-  @IsString()
-  job: string;
-
-  @IsOptional()
-  @IsString()
-  location: string;
-
-  @IsOptional()
-  @IsString()
-  base: string;
 }

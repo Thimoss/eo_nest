@@ -7,12 +7,15 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('category')
+@UseGuards(AuthGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
@@ -24,7 +27,7 @@ export class CategoryController {
   @Get('list')
   async findAll(
     @Query('name') name: string,
-    @Query('page') page: string = '1', // Default to page 1
+    @Query('page') page: string = '1',
     @Query('pageSize') pageSize: string = '10',
   ) {
     return this.categoryService.findAll({
@@ -35,7 +38,7 @@ export class CategoryController {
   }
 
   @Get('detail/:id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.categoryService.findOne(+id);
   }
 
