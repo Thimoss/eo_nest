@@ -7,7 +7,6 @@ import {
   Delete,
   Get,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
@@ -15,10 +14,8 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
 import { UpdatePercentageDto } from './dto/update-percentage.dto';
 import { UpdateDocumentApprovalDto } from './dto/update-document-approval.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('document')
-@UseGuards(AuthGuard)
 export class DocumentController {
   constructor(private readonly documentService: DocumentService) {}
 

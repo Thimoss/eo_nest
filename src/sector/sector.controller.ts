@@ -6,15 +6,12 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
 } from '@nestjs/common';
 import { SectorService } from './sector.service';
 import { CreateSectorDto } from './dto/create-sector.dto';
 import { UpdateSectorDto } from './dto/update-sector.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('sector')
-@UseGuards(AuthGuard)
 export class SectorController {
   constructor(private readonly sectorService: SectorService) {}
 

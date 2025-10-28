@@ -7,15 +7,12 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { ItemService } from './item.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('item')
-@UseGuards(AuthGuard)
 export class ItemController {
   constructor(private readonly itemService: ItemService) {}
 
