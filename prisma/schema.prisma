@@ -70,20 +70,8 @@ model Item {
   categoryCode         String
   sectorNo             String
   sectorId             Int
-  pdfUrl               String //link pdf
-  listOffer            Offer[]
+  pdfUrl               String? //link pdf
   sector               Sector    @relation("SectorItems", fields: [sectorId], references: [id], onDelete: Cascade)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  deletedAt            DateTime?
-}
-
-model Offer {
-  id                   Int       @id @default(autoincrement())
-  materialPricePerUnit Float // Harga material per unit
-  feePricePerUnit      Float // Harga jasa per unit
-  itemId               Int // Relasi ke Item
-  item                 Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime?

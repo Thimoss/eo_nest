@@ -10,19 +10,47 @@ export class ItemService {
   /**
    *
    * @param data
+   * @param pdfUrl
+   * @returns
    */
-  async create(data: CreateItemDto) {
-    const {
-      no,
-      name,
-      source,
-      minimum,
-      unit,
-      materialPricePerUnit,
-      feePricePerUnit,
-      singleItem,
-      sectorId,
-    } = data;
+  async create(data: CreateItemDto, pdfUrl: string) {
+    const minimum = data.minimum ? parseInt(data.minimum.toString(), 10) : 0;
+    const materialPricePerUnit = data.materialPricePerUnit
+      ? parseFloat(data.materialPricePerUnit.toString())
+      : 0;
+    const feePricePerUnit = data.feePricePerUnit
+      ? parseFloat(data.feePricePerUnit.toString())
+      : 0;
+    const sectorId = parseInt(data.sectorId.toString(), 10);
+    const singleItem = data.singleItem === 'true';
+
+    // Validate the converted fields
+    if (isNaN(minimum)) {
+      throw new HttpException(
+        'Minimum must be a valid number',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (isNaN(materialPricePerUnit)) {
+      throw new HttpException(
+        'Material price per unit must be a valid number',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (isNaN(feePricePerUnit)) {
+      throw new HttpException(
+        'Fee price per unit must be a valid number',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (isNaN(sectorId)) {
+      throw new HttpException(
+        'Sector ID must be a valid number',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const { no, name, source, unit } = data;
 
     const sector = await this.prisma.sector.findUnique({
       where: { id: sectorId },
@@ -58,6 +86,7 @@ export class ItemService {
       singleItem,
       sectorNo: sector.no,
       categoryCode,
+      pdfUrl,
     };
     if (singleItem === false) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -88,6 +117,128 @@ export class ItemService {
       statusCode: 200,
       message: 'Item created successfully',
       data: createItem,
+    };
+  }
+
+  /**
+   *
+   * @param id
+   * @param data
+   * @returns
+   */
+  async update(id: number, data: UpdateItemDto, pdfUrl: string) {
+    const minimum = data.minimum ? parseInt(data.minimum.toString(), 10) : 0;
+    const materialPricePerUnit = data.materialPricePerUnit
+      ? parseFloat(data.materialPricePerUnit.toString())
+      : 0;
+    const feePricePerUnit = data.feePricePerUnit
+      ? parseFloat(data.feePricePerUnit.toString())
+      : 0;
+    const sectorId = parseInt(data.sectorId.toString(), 10);
+    const singleItem = data.singleItem === 'true';
+
+    // Validate the converted fields
+    if (isNaN(minimum)) {
+      throw new HttpException(
+        'Minimum must be a valid number',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (isNaN(materialPricePerUnit)) {
+      throw new HttpException(
+        'Material price per unit must be a valid number',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (isNaN(feePricePerUnit)) {
+      throw new HttpException(
+        'Fee price per unit must be a valid number',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (isNaN(sectorId)) {
+      throw new HttpException(
+        'Sector ID must be a valid number',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const { no, name, source, unit } = data;
+
+    if (!sectorId) {
+      throw new HttpException('Sector ID is required', HttpStatus.BAD_REQUEST);
+    }
+
+    const sector = await this.prisma.sector.findUnique({
+      where: { id: sectorId },
+    });
+
+    if (!sector) {
+      throw new HttpException('Sector not found', HttpStatus.NOT_FOUND);
+    }
+
+    const categoryCode = sector.categoryCode;
+
+    const itemNo = `${no}`;
+
+    const existingItem = await this.prisma.item.findFirst({
+      where: {
+        no: itemNo,
+        sectorId: sectorId,
+        NOT: {
+          id: id,
+        },
+      },
+    });
+
+    if (existingItem) {
+      throw new HttpException(
+        `Item number ${itemNo} already exists in this sector`,
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    let itemData: any = {
+      no: itemNo,
+      name,
+      source,
+      sectorId,
+      singleItem,
+      sectorNo: sector.no,
+      categoryCode,
+      pdfUrl,
+    };
+    if (singleItem === false) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      itemData = {
+        ...itemData,
+        unit: null,
+        minimum: null,
+        materialPricePerUnit: null,
+        feePricePerUnit: null,
+      };
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      itemData = {
+        ...itemData,
+        minimum,
+        unit,
+        materialPricePerUnit,
+        feePricePerUnit,
+      };
+    }
+
+    const updatedItem = await this.prisma.item.update({
+      where: {
+        id,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data: itemData,
+    });
+    return {
+      statusCode: 200,
+      message: 'Item updated successfully',
+      data: updatedItem,
     };
   }
 
@@ -148,100 +299,6 @@ export class ItemService {
       statusCode: 200,
       message: 'Items found successfully',
       data: items,
-    };
-  }
-
-  /**
-   *
-   * @param id
-   * @param data
-   * @returns
-   */
-  async update(id: number, data: UpdateItemDto) {
-    const {
-      no,
-      name,
-      source,
-      minimum,
-      unit,
-      materialPricePerUnit,
-      feePricePerUnit,
-      singleItem,
-      sectorId,
-    } = data;
-
-    if (!sectorId) {
-      throw new HttpException('Sector ID is required', HttpStatus.BAD_REQUEST);
-    }
-
-    const sector = await this.prisma.sector.findUnique({
-      where: { id: sectorId },
-    });
-
-    if (!sector) {
-      throw new HttpException('Sector not found', HttpStatus.NOT_FOUND);
-    }
-    const categoryCode = sector.categoryCode;
-    const itemNo = `${no}`;
-
-    const existingItem = await this.prisma.item.findFirst({
-      where: {
-        no: itemNo,
-        sectorId: sectorId,
-        NOT: {
-          id: id,
-        },
-      },
-    });
-
-    if (existingItem) {
-      throw new HttpException(
-        `Item number ${itemNo} already exists in this sector`,
-        HttpStatus.CONFLICT,
-      );
-    }
-
-    let itemData: any = {
-      no: itemNo,
-      name,
-      source,
-      sectorId,
-      singleItem,
-      sectorNo: sector.no,
-      categoryCode,
-    };
-    if (singleItem === false) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      itemData = {
-        ...itemData,
-        unit: null,
-        minimum: null,
-        materialPricePerUnit: null,
-        feePricePerUnit: null,
-      };
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      itemData = {
-        ...itemData,
-        minimum,
-        unit,
-        materialPricePerUnit,
-        feePricePerUnit,
-      };
-    }
-
-    const updatedItem = await this.prisma.item.update({
-      where: {
-        id,
-      },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      data: itemData,
-    });
-
-    return {
-      statusCode: 200,
-      message: 'Item updated successfully',
-      data: updatedItem,
     };
   }
 

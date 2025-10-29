@@ -1,13 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateItemDto } from './create-item.dto';
-import {
-  IsBoolean,
-  IsInt,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateItemDto extends PartialType(CreateItemDto) {
   @IsString()
@@ -22,27 +15,30 @@ export class UpdateItemDto extends PartialType(CreateItemDto) {
   @IsOptional()
   source?: string;
 
-  @IsInt()
+  @IsString()
   @IsOptional()
-  minimum?: number;
+  minimum?: string;
 
   @IsOptional()
   @IsString()
   unit?: string;
 
   @IsOptional()
-  @IsNumber()
-  materialPricePerUnit?: number;
+  @IsString()
+  materialPricePerUnit?: string;
 
   @IsOptional()
-  @IsNumber()
-  feePricePerUnit?: number;
+  @IsString()
+  feePricePerUnit?: string;
 
-  @IsBoolean()
+  @IsString()
   @IsNotEmpty()
-  singleItem: boolean;
+  singleItem: string;
 
-  @IsInt()
+  @IsString()
   @IsNotEmpty()
-  sectorId: number;
+  sectorId: string;
+
+  @IsOptional()
+  file?: Express.Multer.File;
 }
