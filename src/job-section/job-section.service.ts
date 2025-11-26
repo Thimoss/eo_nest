@@ -7,7 +7,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class JobSectionService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createJobSectionDto: CreateJobSectionDto) {
+  /**
+   *
+   * @param createJobSectionDto
+   * @returns
+   */
+  async create(createJobSectionDto: CreateJobSectionDto, userId: number) {
     const { name, documentId } = createJobSectionDto;
 
     const document = await this.prisma.document.findUnique({
@@ -16,6 +21,13 @@ export class JobSectionService {
 
     if (!document) {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to create a job section for this document',
+        HttpStatus.FORBIDDEN,
+      );
     }
     const existingJobSection = await this.prisma.jobSection.findFirst({
       where: {
@@ -47,8 +59,34 @@ export class JobSectionService {
     }
   }
 
-  async update(id: number, updateJobSectionDto: UpdateJobSectionDto) {
+  /**
+   *
+   * @param id
+   * @param updateJobSectionDto
+   * @param userId
+   * @returns
+   */
+  async update(
+    id: number,
+    updateJobSectionDto: UpdateJobSectionDto,
+    userId: number,
+  ) {
     const { name, documentId } = updateJobSectionDto;
+
+    const document = await this.prisma.document.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to update a job section for this document',
+        HttpStatus.FORBIDDEN,
+      );
+    }
 
     const jobSection = await this.prisma.jobSection.findUnique({
       where: { id },
@@ -88,13 +126,23 @@ export class JobSectionService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, userId: number) {
     const jobSection = await this.prisma.jobSection.findUnique({
       where: { id },
+      include: {
+        document: true,
+      },
     });
 
     if (!jobSection) {
       throw new HttpException('Job section not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (jobSection.document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to delete this job section',
+        HttpStatus.FORBIDDEN,
+      );
     }
     await this.prisma.jobSection.delete({
       where: { id },

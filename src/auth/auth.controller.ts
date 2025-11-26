@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Body,
   Controller,
@@ -23,10 +23,10 @@ export class AuthController {
     return await this.authService.signIn(loginData);
   }
 
-  @UseGuards(AuthGuard) // Menambahkan JWT Guard untuk memastikan hanya pengguna yang terautentikasi yang bisa mengakses
+  @UseGuards(AuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
     const user = req.user;
-    return await this.authService.getProfile(user.id);
+    return await this.authService.getProfile(user.sub);
   }
 }

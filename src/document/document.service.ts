@@ -15,8 +15,9 @@ export class DocumentService {
    * @param createDocumentDto
    * @returns
    */
-  async create(createDocumentDto: CreateDocumentDto) {
+  async create(createDocumentDto: CreateDocumentDto, req: number) {
     const { name } = createDocumentDto;
+    const userId = req;
 
     const uniqueSlug = await this.generateUniqueSlug(name);
 
@@ -27,6 +28,7 @@ export class DocumentService {
         job: '',
         location: '',
         base: '',
+        createdById: userId,
       },
     });
 
@@ -76,10 +78,14 @@ export class DocumentService {
    * @param sortBy
    * @returns
    */
-  async findAll(sortBy: string) {
+  async findAll(sortBy: string, req: number) {
     const orderBy = this.getOrderBy(sortBy);
+    const userId = req;
 
     const documents = await this.prisma.document.findMany({
+      where: {
+        createdById: userId,
+      },
       orderBy,
     });
 
@@ -117,7 +123,13 @@ export class DocumentService {
     }
   }
 
-  async findOne(slug: string) {
+  /**
+   *
+   * @param slug
+   * @returns
+   */
+  async findOne(slug: string, req: number) {
+    const userId = req;
     const document = await this.prisma.document.findUnique({
       where: { slug },
       include: {
@@ -138,6 +150,13 @@ export class DocumentService {
 
     if (!document) {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to access this document',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     for (const jobSection of document.jobSections) {
@@ -207,8 +226,9 @@ export class DocumentService {
    * @param updateDocumentDto
    * @returns
    */
-  async update(id: number, updateDocumentDto: UpdateDocumentDto) {
+  async update(id: number, updateDocumentDto: UpdateDocumentDto, req: number) {
     const { name } = updateDocumentDto;
+    const userId = req;
 
     const document = await this.prisma.document.findUnique({
       where: { id },
@@ -216,6 +236,12 @@ export class DocumentService {
 
     if (!document) {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to access this document',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const uniqueSlug = await this.generateUniqueSlug(name);
@@ -244,8 +270,10 @@ export class DocumentService {
   async updateGeneralInfo(
     slug: string,
     updateGeneralDocument: UpdateGeneralDocumentDto,
+    req: number,
   ) {
     const { base, job, location } = updateGeneralDocument;
+    const userId = req;
 
     const document = await this.prisma.document.findUnique({
       where: { slug },
@@ -253,6 +281,12 @@ export class DocumentService {
 
     if (!document) {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to access this document',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const updatedDocument = await this.prisma.document.update({
@@ -274,18 +308,25 @@ export class DocumentService {
   async updatePercentage(
     slug: string,
     updatePercentageDto: UpdatePercentageDto,
+    req: number,
   ) {
-    // Find the document by slug
+    const userId = req;
+
     const document = await this.prisma.document.findUnique({
       where: { slug },
     });
 
-    // If document is not found, throw an exception
     if (!document) {
       throw new Error('Document not found');
     }
 
-    // Update the percentageBenefitsAndRisks in the document
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to access this document',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const updatedDocument = await this.prisma.document.update({
       where: { slug },
       data: {
@@ -310,6 +351,7 @@ export class DocumentService {
   async updateApproval(
     slug: string,
     updateDocumentApproval: UpdateDocumentApprovalDto,
+    req: number,
   ) {
     const {
       recapitulationLocation,
@@ -321,12 +363,21 @@ export class DocumentService {
       confirmedByPosition,
     } = updateDocumentApproval;
 
+    const userId = req;
+
     const document = await this.prisma.document.findUnique({
       where: { slug },
     });
 
     if (!document) {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to access this document',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const updatedDocument = await this.prisma.document.update({
@@ -356,13 +407,22 @@ export class DocumentService {
    * @param id
    * @returns
    */
-  async remove(id: number) {
-    const category = await this.prisma.document.findUnique({
+  async remove(id: number, req: number) {
+    const userId = req;
+
+    const document = await this.prisma.document.findUnique({
       where: { id },
     });
 
-    if (!category) {
+    if (!document) {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to access this document',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     await this.prisma.document.delete({

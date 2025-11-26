@@ -122,12 +122,28 @@ export class UsersService implements OnModuleInit {
       orderBy: { name: 'asc' },
     });
 
+    const totalCount = await this.prisma.user.count({
+      where: {
+        name: filter.name
+          ? { contains: filter.name, mode: 'insensitive' }
+          : undefined,
+      },
+    });
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const usersWithoutPassword = users.map(({ password, ...user }) => user);
     return {
       statusCode: 200,
       message: 'User list retrieved successfully',
-      data: usersWithoutPassword,
+      data: {
+        list: usersWithoutPassword,
+        pagination: {
+          currentPage: page,
+          pageSize: pageSize,
+          totalItems: totalCount,
+          totalPages: Math.ceil(totalCount / pageSize),
+        },
+      },
     };
   }
 

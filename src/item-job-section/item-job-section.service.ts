@@ -7,7 +7,16 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ItemJobSectionService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createItemJobSectionDto: CreateItemJobSectionDto) {
+  /**
+   *
+   * @param createItemJobSectionDto
+   * @param userId
+   * @returns
+   */
+  async create(
+    createItemJobSectionDto: CreateItemJobSectionDto,
+    userId: number,
+  ) {
     const {
       name,
       volume,
@@ -21,10 +30,22 @@ export class ItemJobSectionService {
 
     const jobSection = await this.prisma.jobSection.findUnique({
       where: { id: jobSectionId },
+      include: {
+        document: true,
+      },
     });
+
     if (!jobSection) {
       throw new HttpException('Job Section not found', HttpStatus.NOT_FOUND);
     }
+
+    if (jobSection.document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to create item job section for this document',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const existingItemJobSection = await this.prisma.itemJobSection.findFirst({
       where: {
         name: name,
@@ -66,7 +87,18 @@ export class ItemJobSectionService {
     }
   }
 
-  async update(id: number, updateItemJobSectionDto: UpdateItemJobSectionDto) {
+  /**
+   *
+   * @param id
+   * @param updateItemJobSectionDto
+   * @param userId
+   * @returns
+   */
+  async update(
+    id: number,
+    updateItemJobSectionDto: UpdateItemJobSectionDto,
+    userId: number,
+  ) {
     const {
       name,
       volume,
@@ -80,12 +112,26 @@ export class ItemJobSectionService {
 
     const itemJobSection = await this.prisma.itemJobSection.findUnique({
       where: { id },
+      include: {
+        jobSection: {
+          include: {
+            document: true,
+          },
+        },
+      },
     });
 
     if (!itemJobSection) {
       throw new HttpException(
         'Item job section not found',
         HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (itemJobSection.jobSection.document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to update this item job section',
+        HttpStatus.FORBIDDEN,
       );
     }
 
@@ -130,9 +176,16 @@ export class ItemJobSectionService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, userId: number) {
     const itemJobSection = await this.prisma.itemJobSection.findUnique({
       where: { id },
+      include: {
+        jobSection: {
+          include: {
+            document: true,
+          },
+        },
+      },
     });
 
     if (!itemJobSection) {
@@ -141,9 +194,18 @@ export class ItemJobSectionService {
         HttpStatus.NOT_FOUND,
       );
     }
+
+    if (itemJobSection.jobSection.document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to delete this item job section',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     await this.prisma.itemJobSection.delete({
       where: { id },
     });
+
     return {
       statusCode: 200,
       message: 'Item job section removed successfully',

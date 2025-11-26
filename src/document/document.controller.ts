@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import {
   Controller,
   Post,
@@ -7,6 +11,8 @@ import {
   Delete,
   Get,
   Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
@@ -14,60 +20,86 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
 import { UpdatePercentageDto } from './dto/update-percentage.dto';
 import { UpdateDocumentApprovalDto } from './dto/update-document-approval.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('document')
+@UseGuards(AuthGuard)
 export class DocumentController {
   constructor(private readonly documentService: DocumentService) {}
 
   @Post('create')
-  create(@Body() createDocumentDto: CreateDocumentDto) {
-    return this.documentService.create(createDocumentDto);
+  create(@Body() createDocumentDto: CreateDocumentDto, @Request() req) {
+    const user = req.user;
+    return this.documentService.create(createDocumentDto, user.sub);
   }
 
   @Get('list')
-  async findAll(@Query('sortBy') sortBy: string) {
-    return this.documentService.findAll(sortBy);
+  async findAll(@Query('sortBy') sortBy: string, @Request() req) {
+    const user = req.user;
+    return this.documentService.findAll(sortBy, user.sub);
   }
 
   @Get('detail/:slug')
-  findOne(@Param('slug') slug: string) {
-    return this.documentService.findOne(slug);
+  async findOne(@Param('slug') slug: string, @Request() req) {
+    const user = req.user;
+    return this.documentService.findOne(slug, user.sub);
   }
 
   @Patch('update/:id')
   update(
     @Param('id') id: string,
     @Body() updateDocumentDto: UpdateDocumentDto,
+    @Request() req,
   ) {
-    return this.documentService.update(+id, updateDocumentDto);
+    const user = req.user;
+    return this.documentService.update(+id, updateDocumentDto, user.sub);
   }
 
   @Patch('update/general-info/:slug')
   updateGeneralInfo(
     @Param('slug') slug: string,
     @Body() updateGeneralDocument: UpdateGeneralDocumentDto,
+    @Request() req,
   ) {
-    return this.documentService.updateGeneralInfo(slug, updateGeneralDocument);
+    const user = req.user;
+    return this.documentService.updateGeneralInfo(
+      slug,
+      updateGeneralDocument,
+      user.sub,
+    );
   }
 
   @Patch('update/percentage/:slug')
   updatePercentageProject(
     @Param('slug') slug: string,
     @Body() updatePercentageDto: UpdatePercentageDto,
+    @Request() req,
   ) {
-    return this.documentService.updatePercentage(slug, updatePercentageDto);
+    const user = req.user;
+    return this.documentService.updatePercentage(
+      slug,
+      updatePercentageDto,
+      user.sub,
+    );
   }
 
   @Patch('update/approval/:slug')
   updateApproval(
     @Param('slug') slug: string,
     @Body() updateDocumentApproval: UpdateDocumentApprovalDto,
+    @Request() req,
   ) {
-    return this.documentService.updateApproval(slug, updateDocumentApproval);
+    const user = req.user;
+    return this.documentService.updateApproval(
+      slug,
+      updateDocumentApproval,
+      user.sub,
+    );
   }
 
   @Delete('delete/:id')
-  remove(@Param('id') id: string) {
-    return this.documentService.remove(+id);
+  remove(@Param('id') id: string, @Request() req) {
+    const user = req.user;
+    return this.documentService.remove(+id, user.sub);
   }
 }

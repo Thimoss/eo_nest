@@ -19,15 +19,16 @@ enum UserRole {
 }
 
 model User {
-  id          Int       @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   name        String
-  email       String    @unique
+  email       String     @unique
   phoneNumber String
   password    String
   role        UserRole
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
+  documents   Document[]
 }
 
 model Category {
@@ -98,6 +99,8 @@ model Document {
   confirmedByName            String       @default("")
   confirmedByPosition        String       @default("")
   jobSections                JobSection[] @relation("DocumentJobSections")
+  createdBy                  User?        @relation(fields: [createdById], references: [id]) // Menambahkan relasi
+  createdById                Int?
   createdAt                  DateTime     @default(now())
   updatedAt                  DateTime     @updatedAt
   deletedAt                  DateTime?

@@ -29,7 +29,6 @@ export class ItemController {
     FileInterceptor('file', {
       limits: { fileSize: 1 * 1024 * 1024 }, // batas ukuran file
       fileFilter: (req, file, callback) => {
-        console.log('File received by multer:', file);
         if (file.mimetype !== 'application/pdf') {
           return callback(
             new HttpException(
@@ -47,8 +46,6 @@ export class ItemController {
     @Body() data: CreateItemDto,
     @UploadedFile() file: Express.Multer.File | undefined,
   ) {
-    console.log('File received 2:', file);
-    console.log('Request body:', data);
     let pdfUrl: string = '';
 
     // Check if file is uploaded
