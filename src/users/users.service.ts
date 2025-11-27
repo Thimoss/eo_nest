@@ -210,14 +210,19 @@ export class UsersService implements OnModuleInit {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    if (updateUserDto.email) {
+    if (updateUserDto.email && updateUserDto.email !== user.email) {
       const emailExists = await this.prisma.user.findUnique({
         where: { email: updateUserDto.email },
       });
       if (emailExists) {
         throw new Error('Email already in use');
       }
+    }
 
+    if (
+      updateUserDto.phoneNumber &&
+      updateUserDto.phoneNumber !== user.phoneNumber
+    ) {
       const phoneNumberExists = await this.prisma.user.findFirst({
         where: { phoneNumber: updateUserDto.phoneNumber },
       });
