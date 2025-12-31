@@ -19,16 +19,18 @@ enum UserRole {
 }
 
 model User {
-  id          Int        @id @default(autoincrement())
-  name        String
-  email       String     @unique
-  phoneNumber String
-  password    String
-  role        UserRole
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?
-  documents   Document[]
+  id                 Int        @id @default(autoincrement())
+  name               String
+  email              String     @unique
+  phoneNumber        String
+  password           String
+  role               UserRole
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  deletedAt          DateTime?
+  documents          Document[] @relation("DocumentCreatedBy") // Documents created by this user
+  checkedDocuments   Document[] @relation("DocumentCheckedBy")
+  confirmedDocuments Document[] @relation("DocumentConfirmedBy")
 }
 
 model Category {
@@ -92,18 +94,22 @@ model Document {
   totalBenefitsAndRisks      Float        @default(0)
   percentageBenefitsAndRisks Float        @default(0)
   recapitulationLocation     String       @default("")
-  preparedByName             String       @default("")
-  preparedByPosition         String       @default("")
-  checkedByName              String       @default("")
-  checkedByPosition          String       @default("")
-  confirmedByName            String       @default("")
-  confirmedByPosition        String       @default("")
   jobSections                JobSection[] @relation("DocumentJobSections")
-  createdBy                  User?        @relation(fields: [createdById], references: [id]) // Menambahkan relasi
-  createdById                Int?
-  createdAt                  DateTime     @default(now())
-  updatedAt                  DateTime     @updatedAt
-  deletedAt                  DateTime?
+
+  // Relations to User: createdBy is the user who created the document
+  createdBy   User @relation("DocumentCreatedBy", fields: [createdById], references: [id])
+  createdById Int
+
+  // checkedBy and confirmedBy are users selected during creation (only their IDs are sent)
+  checkedBy   User @relation("DocumentCheckedBy", fields: [checkedById], references: [id])
+  checkedById Int
+
+  confirmedBy   User @relation("DocumentConfirmedBy", fields: [confirmedById], references: [id])
+  confirmedById Int
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 model JobSection {

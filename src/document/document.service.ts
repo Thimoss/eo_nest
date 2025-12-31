@@ -4,7 +4,18 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
 import { UpdatePercentageDto } from './dto/update-percentage.dto';
-import { UpdateDocumentApprovalDto } from './dto/update-document-approval.dto';
+import { UpdateRecapitulationLocationDto } from './dto/update-recapitulation-location.dto';
+
+const documentUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  phoneNumber: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+};
 
 @Injectable()
 export class DocumentService {
@@ -16,8 +27,34 @@ export class DocumentService {
    * @returns
    */
   async create(createDocumentDto: CreateDocumentDto, req: number) {
-    const { name } = createDocumentDto;
+    const { name, checkedById, confirmedById } = createDocumentDto;
     const userId = req;
+
+    if (checkedById === confirmedById) {
+      throw new HttpException(
+        'Checker and confirmer must be different users',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (checkedById === userId || confirmedById === userId) {
+      throw new HttpException(
+        'Checker and confirmer must be different from the creator',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const selectedUsers = await this.prisma.user.findMany({
+      where: { id: { in: [checkedById, confirmedById] } },
+      select: { id: true },
+    });
+
+    if (selectedUsers.length !== 2) {
+      throw new HttpException(
+        'Checker or confirmer user not found',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const uniqueSlug = await this.generateUniqueSlug(name);
 
@@ -29,6 +66,13 @@ export class DocumentService {
         location: '',
         base: '',
         createdById: userId,
+        checkedById,
+        confirmedById,
+      },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
       },
     });
 
@@ -87,6 +131,11 @@ export class DocumentService {
         createdById: userId,
       },
       orderBy,
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
+      },
     });
 
     return {
@@ -133,6 +182,9 @@ export class DocumentService {
     const document = await this.prisma.document.findUnique({
       where: { slug },
       include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
         jobSections: {
           orderBy: {
             id: 'asc',
@@ -227,7 +279,7 @@ export class DocumentService {
    * @returns
    */
   async update(id: number, updateDocumentDto: UpdateDocumentDto, req: number) {
-    const { name } = updateDocumentDto;
+    const { name, checkedById, confirmedById } = updateDocumentDto;
     const userId = req;
 
     const document = await this.prisma.document.findUnique({
@@ -244,13 +296,60 @@ export class DocumentService {
       );
     }
 
-    const uniqueSlug = await this.generateUniqueSlug(name);
+    const nextCheckedById = checkedById ?? document.checkedById;
+    const nextConfirmedById = confirmedById ?? document.confirmedById;
+
+    if (checkedById !== undefined || confirmedById !== undefined) {
+      if (nextCheckedById === nextConfirmedById) {
+        throw new HttpException(
+          'Checker and confirmer must be different users',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (nextCheckedById === userId || nextConfirmedById === userId) {
+        throw new HttpException(
+          'Checker and confirmer must be different from the creator',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const selectedUsers = await this.prisma.user.findMany({
+        where: { id: { in: [nextCheckedById, nextConfirmedById] } },
+        select: { id: true },
+      });
+
+      if (selectedUsers.length !== 2) {
+        throw new HttpException(
+          'Checker or confirmer user not found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
+    const data: {
+      checkedById: number;
+      confirmedById: number;
+      name?: string;
+      slug?: string;
+    } = {
+      checkedById: nextCheckedById,
+      confirmedById: nextConfirmedById,
+    };
+
+    if (name !== undefined) {
+      const uniqueSlug = await this.generateUniqueSlug(name);
+      data.name = name;
+      data.slug = uniqueSlug;
+    }
 
     const updatedDocument = await this.prisma.document.update({
       where: { id },
-      data: {
-        name: name ?? document.name,
-        slug: uniqueSlug,
+      data,
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
       },
     });
 
@@ -296,6 +395,11 @@ export class DocumentService {
         job: job ?? document.job,
         location: location ?? document.location,
       },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
+      },
     });
 
     return {
@@ -333,6 +437,11 @@ export class DocumentService {
         percentageBenefitsAndRisks:
           updatePercentageDto.percentageBenefitsAndRisks,
       },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
+      },
     });
 
     return {
@@ -345,24 +454,15 @@ export class DocumentService {
   /**
    *
    * @param slug
-   * @param updateDocumentApproval
+   * @param updateRecapitulationLocationDto
    * @returns
    */
-  async updateApproval(
+  async updateRecapitulationLocation(
     slug: string,
-    updateDocumentApproval: UpdateDocumentApprovalDto,
+    updateRecapitulationLocationDto: UpdateRecapitulationLocationDto,
     req: number,
   ) {
-    const {
-      recapitulationLocation,
-      preparedByName,
-      preparedByPosition,
-      checkedByName,
-      checkedByPosition,
-      confirmedByName,
-      confirmedByPosition,
-    } = updateDocumentApproval;
-
+    const { recapitulationLocation } = updateRecapitulationLocationDto;
     const userId = req;
 
     const document = await this.prisma.document.findUnique({
@@ -383,21 +483,18 @@ export class DocumentService {
     const updatedDocument = await this.prisma.document.update({
       where: { slug },
       data: {
-        recapitulationLocation:
-          recapitulationLocation ?? document.recapitulationLocation,
-        preparedByName: preparedByName ?? document.preparedByName,
-        preparedByPosition: preparedByPosition ?? document.preparedByPosition,
-        checkedByName: checkedByName ?? document.checkedByName,
-        checkedByPosition: checkedByPosition ?? document.checkedByPosition,
-        confirmedByName: confirmedByName ?? document.confirmedByName,
-        confirmedByPosition:
-          confirmedByPosition ?? document.confirmedByPosition,
+        recapitulationLocation,
+      },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
       },
     });
 
     return {
       statusCode: 200,
-      message: 'Document approval updated successfully',
+      message: 'Recapitulation location updated successfully',
       data: updatedDocument,
     };
   }

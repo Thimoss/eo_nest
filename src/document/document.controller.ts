@@ -19,7 +19,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
 import { UpdatePercentageDto } from './dto/update-percentage.dto';
-import { UpdateDocumentApprovalDto } from './dto/update-document-approval.dto';
+import { UpdateRecapitulationLocationDto } from './dto/update-recapitulation-location.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('document')
@@ -83,16 +83,17 @@ export class DocumentController {
     );
   }
 
-  @Patch('update/approval/:slug')
-  updateApproval(
+  @Patch('update/recapitulation-location/:slug')
+  updateRecapitulationLocation(
     @Param('slug') slug: string,
-    @Body() updateDocumentApproval: UpdateDocumentApprovalDto,
+    @Body()
+    updateRecapitulationLocationDto: UpdateRecapitulationLocationDto,
     @Request() req,
   ) {
     const user = req.user;
-    return this.documentService.updateApproval(
+    return this.documentService.updateRecapitulationLocation(
       slug,
-      updateDocumentApproval,
+      updateRecapitulationLocationDto,
       user.sub,
     );
   }

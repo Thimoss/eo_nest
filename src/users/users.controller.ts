@@ -29,8 +29,6 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN')
   @Get('list')
   async findAll(
     @Query('name') name: string,
