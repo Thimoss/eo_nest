@@ -25,6 +25,7 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({
       where: {
         email,
+        deletedAt: null,
       },
     });
 
@@ -46,6 +47,7 @@ export class AuthService {
     const getProfileDetail = await this.prisma.user.findFirst({
       where: {
         id: userId,
+        deletedAt: null,
       },
     });
 
