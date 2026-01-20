@@ -42,6 +42,14 @@ Response
 Hello World!
 ```
 
+### GET /api-docs
+Serve API.md as a simple HTML page.
+
+Example
+```bash
+curl "http://localhost:3002/api-docs"
+```
+
 ---
 
 ## Auth
@@ -677,14 +685,16 @@ Response
 ```
 
 ### GET /document/list
-List documents created by the current user.
+List documents based on scope (created/review/confirm).
 
 Query params
 - `sortBy` (string, optional: `asc`, `desc`, `recent`, `least`)
+- `scope` (string, optional: `created`, `review`, `confirm`, default `created`)
+- `limit` (number, optional)
 
 Example
 ```bash
-curl "http://localhost:3002/document/list?sortBy=recent" \
+curl "http://localhost:3002/document/list?sortBy=recent&scope=created" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -698,7 +708,7 @@ Response
 ```
 
 ### GET /document/detail/:slug
-Get document detail. Calculates totals and requires `percentageBenefitsAndRisks` set.
+Get document detail. Accessible by creator, checker, or confirmer. Calculates totals and requires `percentageBenefitsAndRisks` set.
 
 Example
 ```bash

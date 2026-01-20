@@ -11,6 +11,7 @@ const documentUserSelect = {
   name: true,
   email: true,
   phoneNumber: true,
+  position: true,
   role: true,
   createdAt: true,
   updatedAt: true,
@@ -122,15 +123,21 @@ export class DocumentService {
    * @param sortBy
    * @returns
    */
-  async findAll(sortBy: string, req: number) {
+  async findAll(
+    sortBy: string,
+    req: number,
+    scope?: string,
+    limit?: number,
+  ) {
     const orderBy = this.getOrderBy(sortBy);
     const userId = req;
+    const where = this.getScopeFilter(scope, userId);
+    const take = limit && limit > 0 ? limit : undefined;
 
     const documents = await this.prisma.document.findMany({
-      where: {
-        createdById: userId,
-      },
+      where,
       orderBy,
+      take,
       include: {
         createdBy: { select: documentUserSelect },
         checkedBy: { select: documentUserSelect },
@@ -172,6 +179,18 @@ export class DocumentService {
     }
   }
 
+  private getScopeFilter(scope: string | undefined, userId: number) {
+    switch (scope) {
+      case 'review':
+        return { checkedById: userId };
+      case 'confirm':
+        return { confirmedById: userId };
+      case 'created':
+      default:
+        return { createdById: userId };
+    }
+  }
+
   /**
    *
    * @param slug
@@ -204,7 +223,12 @@ export class DocumentService {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
     }
 
-    if (document.createdById !== userId) {
+    const canAccess =
+      document.createdById === userId ||
+      document.checkedById === userId ||
+      document.confirmedById === userId;
+
+    if (!canAccess) {
       throw new HttpException(
         'You do not have permission to access this document',
         HttpStatus.FORBIDDEN,
