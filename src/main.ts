@@ -9,10 +9,9 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'http://localhost:3000',
-      'http://192.168.1.5:3000',
-      'https://xtjrxg9t-3000.asse.devtunnels.ms',
-    ], // Ganti dengan URL frontend kamu
+    'http://localhost:3000',
+    'https://my.owner-estimate.web.id'
+  ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Metode HTTP yang diizinkan
     credentials: true, // Jika perlu mengizinkan cookies dan credentials
   });
