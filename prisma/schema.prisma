@@ -18,6 +18,13 @@ enum UserRole {
   USER
 }
 
+enum DocumentStatus {
+  IN_PROGRESS
+  NEED_CHECKED
+  NEED_CONFIRMED
+  APPROVED
+}
+
 model User {
   id                 Int        @id @default(autoincrement())
   name               String
@@ -84,6 +91,7 @@ model Document {
   id                         Int          @id @default(autoincrement())
   name                       String
   slug                       String       @unique
+  status                     DocumentStatus @default(IN_PROGRESS)
   job                        String       @default("")
   location                   String       @default("")
   base                       String       @default("")

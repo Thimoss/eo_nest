@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { DocumentStatus } from '@prisma/client';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -65,6 +66,7 @@ export class DocumentService {
         job: '',
         location: '',
         base: '',
+        status: DocumentStatus.IN_PROGRESS,
         createdById: userId,
         checkedById,
         confirmedById,
@@ -122,14 +124,13 @@ export class DocumentService {
    * @param sortBy
    * @returns
    */
-  async findAll(sortBy: string, req: number) {
+  async findAll(sortBy: string, req: number, scope?: string) {
     const orderBy = this.getOrderBy(sortBy);
     const userId = req;
+    const where = this.getScopeWhere(scope, userId);
 
     const documents = await this.prisma.document.findMany({
-      where: {
-        createdById: userId,
-      },
+      where,
       orderBy,
       include: {
         createdBy: { select: documentUserSelect },
@@ -143,6 +144,17 @@ export class DocumentService {
       message: 'Items found successfully',
       data: documents,
     };
+  }
+
+  private getScopeWhere(scope: string | undefined, userId: number) {
+    switch (scope) {
+      case 'review':
+        return { checkedById: userId };
+      case 'confirm':
+        return { confirmedById: userId };
+      default:
+        return { createdById: userId };
+    }
   }
 
   /**
@@ -204,7 +216,12 @@ export class DocumentService {
       throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
     }
 
-    if (document.createdById !== userId) {
+    const canAccess =
+      document.createdById === userId ||
+      document.checkedById === userId ||
+      document.confirmedById === userId;
+
+    if (!canAccess) {
       throw new HttpException(
         'You do not have permission to access this document',
         HttpStatus.FORBIDDEN,
@@ -495,6 +512,138 @@ export class DocumentService {
     return {
       statusCode: 200,
       message: 'Recapitulation location updated successfully',
+      data: updatedDocument,
+    };
+  }
+
+  async submitForCheck(slug: string, req: number) {
+    const userId = req;
+
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.createdById !== userId) {
+      throw new HttpException(
+        'You do not have permission to submit this document',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (document.status !== DocumentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Document is not in progress',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const updatedDocument = await this.prisma.document.update({
+      where: { slug },
+      data: {
+        status: DocumentStatus.NEED_CHECKED,
+      },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
+      },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Document submitted for checking successfully',
+      data: updatedDocument,
+    };
+  }
+
+  async approveCheck(slug: string, req: number) {
+    const userId = req;
+
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.checkedById !== userId) {
+      throw new HttpException(
+        'You do not have permission to check this document',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (document.status !== DocumentStatus.NEED_CHECKED) {
+      throw new HttpException(
+        'Document is not ready to be checked',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const updatedDocument = await this.prisma.document.update({
+      where: { slug },
+      data: {
+        status: DocumentStatus.NEED_CONFIRMED,
+      },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
+      },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Document checked successfully',
+      data: updatedDocument,
+    };
+  }
+
+  async approveConfirm(slug: string, req: number) {
+    const userId = req;
+
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (document.confirmedById !== userId) {
+      throw new HttpException(
+        'You do not have permission to confirm this document',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (document.status !== DocumentStatus.NEED_CONFIRMED) {
+      throw new HttpException(
+        'Document is not ready to be confirmed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const updatedDocument = await this.prisma.document.update({
+      where: { slug },
+      data: {
+        status: DocumentStatus.APPROVED,
+      },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
+      },
+    });
+
+    return {
+      statusCode: 200,
+      message: 'Document confirmed successfully',
       data: updatedDocument,
     };
   }

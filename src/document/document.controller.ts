@@ -34,9 +34,13 @@ export class DocumentController {
   }
 
   @Get('list')
-  async findAll(@Query('sortBy') sortBy: string, @Request() req) {
+  async findAll(
+    @Query('sortBy') sortBy: string,
+    @Query('scope') scope: string,
+    @Request() req,
+  ) {
     const user = req.user;
-    return this.documentService.findAll(sortBy, user.sub);
+    return this.documentService.findAll(sortBy, user.sub, scope);
   }
 
   @Get('detail/:slug')
@@ -96,6 +100,24 @@ export class DocumentController {
       updateRecapitulationLocationDto,
       user.sub,
     );
+  }
+
+  @Patch('submit/:slug')
+  submitForCheck(@Param('slug') slug: string, @Request() req) {
+    const user = req.user;
+    return this.documentService.submitForCheck(slug, user.sub);
+  }
+
+  @Patch('approve/check/:slug')
+  approveCheck(@Param('slug') slug: string, @Request() req) {
+    const user = req.user;
+    return this.documentService.approveCheck(slug, user.sub);
+  }
+
+  @Patch('approve/confirm/:slug')
+  approveConfirm(@Param('slug') slug: string, @Request() req) {
+    const user = req.user;
+    return this.documentService.approveConfirm(slug, user.sub);
   }
 
   @Delete('delete/:id')
