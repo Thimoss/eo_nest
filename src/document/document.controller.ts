@@ -34,9 +34,15 @@ export class DocumentController {
   }
 
   @Get('list')
-  async findAll(@Query('sortBy') sortBy: string, @Request() req) {
+  async findAll(
+    @Query('sortBy') sortBy: string,
+    @Query('scope') scope: string,
+    @Query('limit') limit: string,
+    @Request() req,
+  ) {
     const user = req.user;
-    return this.documentService.findAll(sortBy, user.sub);
+    const parsedLimit = limit ? Number(limit) : undefined;
+    return this.documentService.findAll(sortBy, user.sub, scope, parsedLimit);
   }
 
   @Get('detail/:slug')

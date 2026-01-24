@@ -129,11 +129,12 @@ export class DocumentService {
     sortBy: string,
     req: number,
     scope?: string,
-    scope?: string,
     limit?: number,
   ) {
     const orderBy = this.getOrderBy(sortBy);
     const userId = req;
+    const where = this.getScopeWhere(scope, userId);
+    const take = limit ? Number(limit) : undefined;
 
     const documents = await this.prisma.document.findMany({
       where,
@@ -188,18 +189,6 @@ export class DocumentService {
         return sortOptions.least;
       default:
         return {};
-    }
-  }
-
-  private getScopeFilter(scope: string | undefined, userId: number) {
-    switch (scope) {
-      case 'review':
-        return { checkedById: userId };
-      case 'confirm':
-        return { confirmedById: userId };
-      case 'created':
-      default:
-        return { createdById: userId };
     }
   }
 
