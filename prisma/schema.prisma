@@ -30,6 +30,7 @@ model User {
   name               String
   email              String     @unique
   phoneNumber        String
+  position           String     @default("")
   password           String
   role               UserRole
   createdAt          DateTime   @default(now())

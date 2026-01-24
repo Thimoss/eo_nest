@@ -34,13 +34,9 @@ export class DocumentController {
   }
 
   @Get('list')
-  async findAll(
-    @Query('sortBy') sortBy: string,
-    @Query('scope') scope: string,
-    @Request() req,
-  ) {
+  async findAll(@Query('sortBy') sortBy: string, @Request() req) {
     const user = req.user;
-    return this.documentService.findAll(sortBy, user.sub, scope);
+    return this.documentService.findAll(sortBy, user.sub);
   }
 
   @Get('detail/:slug')

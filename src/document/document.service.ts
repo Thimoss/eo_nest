@@ -12,6 +12,7 @@ const documentUserSelect = {
   name: true,
   email: true,
   phoneNumber: true,
+  position: true,
   role: true,
   createdAt: true,
   updatedAt: true,
@@ -124,14 +125,20 @@ export class DocumentService {
    * @param sortBy
    * @returns
    */
-  async findAll(sortBy: string, req: number, scope?: string) {
+  async findAll(
+    sortBy: string,
+    req: number,
+    scope?: string,
+    scope?: string,
+    limit?: number,
+  ) {
     const orderBy = this.getOrderBy(sortBy);
     const userId = req;
-    const where = this.getScopeWhere(scope, userId);
 
     const documents = await this.prisma.document.findMany({
       where,
       orderBy,
+      take,
       include: {
         createdBy: { select: documentUserSelect },
         checkedBy: { select: documentUserSelect },
@@ -181,6 +188,18 @@ export class DocumentService {
         return sortOptions.least;
       default:
         return {};
+    }
+  }
+
+  private getScopeFilter(scope: string | undefined, userId: number) {
+    switch (scope) {
+      case 'review':
+        return { checkedById: userId };
+      case 'confirm':
+        return { confirmedById: userId };
+      case 'created':
+      default:
+        return { createdById: userId };
     }
   }
 

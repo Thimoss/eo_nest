@@ -18,7 +18,7 @@ export class UsersService implements OnModuleInit {
 
   async onModuleInit() {
     const adminExists = await this.prisma.user.findFirst({
-      where: { role: UserRole.ADMIN },
+      where: { role: UserRole.ADMIN, deletedAt: null },
     });
 
     if (!adminExists) {
@@ -38,6 +38,7 @@ export class UsersService implements OnModuleInit {
           password: hashedPassword,
           name: 'Admin Default',
           phoneNumber: '1234567890',
+          position: 'Administrator',
           role: UserRole.ADMIN,
         },
       });
@@ -50,7 +51,7 @@ export class UsersService implements OnModuleInit {
    * @returns
    */
   async create(createUserDto: CreateUserDto) {
-    const { name, email, phoneNumber } = createUserDto;
+    const { name, email, phoneNumber, position } = createUserDto;
 
     const checkEmailExist = await this.prisma.user.findUnique({
       where: { email },
@@ -86,6 +87,7 @@ export class UsersService implements OnModuleInit {
         name,
         email,
         phoneNumber,
+        position,
         password: hashedPassword,
         role: 'USER',
       },
@@ -113,6 +115,7 @@ export class UsersService implements OnModuleInit {
     const users = await this.prisma.user.findMany({
       where: {
         role: 'USER',
+        deletedAt: null,
         name: filter.name
           ? { contains: filter.name, mode: 'insensitive' }
           : undefined,
@@ -124,6 +127,8 @@ export class UsersService implements OnModuleInit {
 
     const totalCount = await this.prisma.user.count({
       where: {
+        role: 'USER',
+        deletedAt: null,
         name: filter.name
           ? { contains: filter.name, mode: 'insensitive' }
           : undefined,
@@ -153,8 +158,8 @@ export class UsersService implements OnModuleInit {
    * @returns
    */
   async resetPassword(userId: number) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
     });
 
     if (!user) {
@@ -202,8 +207,8 @@ export class UsersService implements OnModuleInit {
    * @returns
    */
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: id },
+    const user = await this.prisma.user.findFirst({
+      where: { id: id, deletedAt: null },
     });
 
     if (!user) {
@@ -237,6 +242,7 @@ export class UsersService implements OnModuleInit {
         name: updateUserDto.name || user.name,
         email: updateUserDto.email || user.email,
         phoneNumber: updateUserDto.phoneNumber || user.phoneNumber,
+        position: updateUserDto.position || user.position,
       },
     });
     return {
@@ -255,8 +261,8 @@ export class UsersService implements OnModuleInit {
   async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
     const { oldPassword, newPassword, confirmNewPassword } = changePasswordDto;
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
     });
 
     if (!user) {
@@ -299,16 +305,19 @@ export class UsersService implements OnModuleInit {
    * @returns
    */
   async remove(id: number) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: id },
+    const user = await this.prisma.user.findFirst({
+      where: { id: id, deletedAt: null },
     });
 
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    await this.prisma.user.delete({
+    await this.prisma.user.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
     });
 
     return {
