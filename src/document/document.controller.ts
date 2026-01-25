@@ -15,6 +15,9 @@ import {
   Request,
   Res,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+  HttpException,
 } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
@@ -24,6 +27,7 @@ import { UpdatePercentageDto } from './dto/update-percentage.dto';
 import { UpdateRecapitulationLocationDto } from './dto/update-recapitulation-location.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('document')
 export class DocumentController {
@@ -150,6 +154,35 @@ export class DocumentController {
   ) {
     const user = req.user;
     const pdfBuffer = await this.documentService.generatePDF(slug, user.sub);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=document-${slug}.pdf`,
+      'Content-Length': pdfBuffer.length,
+    });
+
+    res.end(pdfBuffer);
+  }
+
+  @Post('download-pdf-ui/:slug')
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  async downloadPdfFromUi(
+    @Param('slug') slug: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Res() res: Response,
+    @Request() req,
+  ) {
+    if (!file?.buffer) {
+      throw new HttpException('PDF file is required', HttpStatus.BAD_REQUEST);
+    }
+
+    const user = req.user;
+    const pdfBuffer = await this.documentService.attachQrToPdf(
+      slug,
+      user.sub,
+      file.buffer,
+    );
 
     res.set({
       'Content-Type': 'application/pdf',
