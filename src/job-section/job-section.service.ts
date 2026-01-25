@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateJobSectionDto } from './dto/create-job-section.dto';
 import { UpdateJobSectionDto } from './dto/update-job-section.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { DocumentStatus } from '@prisma/client';
 
 @Injectable()
 export class JobSectionService {
@@ -27,6 +28,13 @@ export class JobSectionService {
       throw new HttpException(
         'You do not have permission to create a job section for this document',
         HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (document.status !== DocumentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Cannot create job section for document that has been submitted for review',
+        HttpStatus.BAD_REQUEST,
       );
     }
     const existingJobSection = await this.prisma.jobSection.findFirst({
@@ -88,6 +96,13 @@ export class JobSectionService {
       );
     }
 
+    if (document.status !== DocumentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Cannot update job section for document that has been submitted for review',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const jobSection = await this.prisma.jobSection.findUnique({
       where: { id },
     });
@@ -142,6 +157,13 @@ export class JobSectionService {
       throw new HttpException(
         'You do not have permission to delete this job section',
         HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (jobSection.document.status !== DocumentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Cannot delete job section for document that has been submitted for review',
+        HttpStatus.BAD_REQUEST,
       );
     }
     await this.prisma.jobSection.delete({

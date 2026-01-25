@@ -6,6 +6,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateGeneralDocumentDto } from './dto/update-general-document.dto';
 import { UpdatePercentageDto } from './dto/update-percentage.dto';
 import { UpdateRecapitulationLocationDto } from './dto/update-recapitulation-location.dto';
+import { QRCodeService } from './qrcode.service';
+import { PDFService } from './pdf.service';
 
 const documentUserSelect = {
   id: true,
@@ -21,7 +23,11 @@ const documentUserSelect = {
 
 @Injectable()
 export class DocumentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly qrcodeService: QRCodeService,
+    private readonly pdfService: PDFService,
+  ) {}
 
   /**
    *
@@ -125,12 +131,7 @@ export class DocumentService {
    * @param sortBy
    * @returns
    */
-  async findAll(
-    sortBy: string,
-    req: number,
-    scope?: string,
-    limit?: number,
-  ) {
+  async findAll(sortBy: string, req: number, scope?: string, limit?: number) {
     const orderBy = this.getOrderBy(sortBy);
     const userId = req;
     const where = this.getScopeWhere(scope, userId);
@@ -320,6 +321,12 @@ export class DocumentService {
         HttpStatus.FORBIDDEN,
       );
     }
+    if (document.status !== DocumentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Cannot edit document that has been submitted for review',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const nextCheckedById = checkedById ?? document.checkedById;
     const nextConfirmedById = confirmedById ?? document.confirmedById;
@@ -412,6 +419,12 @@ export class DocumentService {
         HttpStatus.FORBIDDEN,
       );
     }
+    if (document.status !== DocumentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Cannot edit document that has been submitted for review',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const updatedDocument = await this.prisma.document.update({
       where: { slug },
@@ -453,6 +466,12 @@ export class DocumentService {
       throw new HttpException(
         'You do not have permission to access this document',
         HttpStatus.FORBIDDEN,
+      );
+    }
+    if (document.status !== DocumentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Cannot edit document that has been submitted for review',
+        HttpStatus.BAD_REQUEST,
       );
     }
 
@@ -502,6 +521,12 @@ export class DocumentService {
       throw new HttpException(
         'You do not have permission to access this document',
         HttpStatus.FORBIDDEN,
+      );
+    }
+    if (document.status !== DocumentStatus.IN_PROGRESS) {
+      throw new HttpException(
+        'Cannot edit document that has been submitted for review',
+        HttpStatus.BAD_REQUEST,
       );
     }
 
@@ -597,6 +622,7 @@ export class DocumentService {
       where: { slug },
       data: {
         status: DocumentStatus.NEED_CONFIRMED,
+        checkedAt: new Date(),
       },
       include: {
         createdBy: { select: documentUserSelect },
@@ -637,10 +663,15 @@ export class DocumentService {
       );
     }
 
+    // Generate QR code
+    const qrCodeDataUrl = await this.qrcodeService.generateQRCode(slug);
+
     const updatedDocument = await this.prisma.document.update({
       where: { slug },
       data: {
         status: DocumentStatus.APPROVED,
+        confirmedAt: new Date(),
+        qrCodeUrl: qrCodeDataUrl,
       },
       include: {
         createdBy: { select: documentUserSelect },
@@ -686,6 +717,135 @@ export class DocumentService {
     return {
       statusCode: 200,
       message: 'Document deleted successfully',
+    };
+  }
+
+  /**
+   * Generate PDF for approved document
+   */
+  async generatePDF(slug: string, userId: number): Promise<Buffer> {
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
+        jobSections: {
+          orderBy: { id: 'asc' },
+          include: {
+            itemJobSections: {
+              orderBy: { id: 'asc' },
+            },
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Check if user has access to this document
+    const canAccess =
+      document.createdById === userId ||
+      document.checkedById === userId ||
+      document.confirmedById === userId;
+
+    if (!canAccess) {
+      throw new HttpException(
+        'You do not have permission to access this document',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    // Check if document is approved
+    if (document.status !== DocumentStatus.APPROVED) {
+      throw new HttpException(
+        'Document must be approved before generating PDF',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!document.checkedAt || !document.confirmedAt) {
+      throw new HttpException(
+        'Document approval information is incomplete',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Prepare document data for PDF generation
+    const documentData = {
+      name: document.name,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
+      createdBy: document.createdBy,
+      checkedBy: document.checkedBy,
+      confirmedBy: document.confirmedBy,
+      checkedAt: document.checkedAt,
+      confirmedAt: document.confirmedAt,
+      job: document.job,
+      location: document.location,
+      base: document.base,
+      totalPrice: document.totalPrice,
+      jobSections: document.jobSections,
+    };
+
+    return await this.pdfService.generateDocumentPDF(documentData, slug);
+  }
+
+  /**
+   * Get public document information for QR code verification
+   * This endpoint does not require authentication
+   */
+  async getPublicDocumentInfo(slug: string) {
+    const document = await this.prisma.document.findUnique({
+      where: { slug },
+      include: {
+        createdBy: { select: documentUserSelect },
+        checkedBy: { select: documentUserSelect },
+        confirmedBy: { select: documentUserSelect },
+      },
+    });
+
+    if (!document) {
+      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Only show information for approved documents
+    if (document.status !== DocumentStatus.APPROVED) {
+      throw new HttpException(
+        'Document information is only available for approved documents',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    // Return only public information
+    return {
+      statusCode: 200,
+      message: 'Document information retrieved successfully',
+      data: {
+        name: document.name,
+        slug: document.slug,
+        status: document.status,
+        job: document.job,
+        location: document.location,
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
+        createdBy: {
+          name: document.createdBy.name,
+          position: document.createdBy.position,
+        },
+        checkedBy: {
+          name: document.checkedBy.name,
+          position: document.checkedBy.position,
+        },
+        checkedAt: document.checkedAt,
+        confirmedBy: {
+          name: document.confirmedBy.name,
+          position: document.confirmedBy.position,
+        },
+        confirmedAt: document.confirmedAt,
+      },
     };
   }
 }
