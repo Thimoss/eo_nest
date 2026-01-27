@@ -115,7 +115,6 @@ export class ItemJobSectionService {
       feePricePerUnit,
       unit,
       information,
-      jobSectionId,
     } = updateItemJobSectionDto;
 
     const itemJobSection = await this.prisma.itemJobSection.findUnique({
@@ -152,35 +151,56 @@ export class ItemJobSectionService {
       );
     }
 
-    const existingItemJobSection = await this.prisma.itemJobSection.findFirst({
-      where: {
-        name: name,
-        jobSectionId: jobSectionId,
-      },
-    });
+    const nextName = name ?? itemJobSection.name;
+    const nextVolume = volume ?? itemJobSection.volume;
+    const nextMinimumVolume = minimumVolume ?? itemJobSection.minimumVolume;
+    const nextMaterialPricePerUnit =
+      materialPricePerUnit ?? itemJobSection.materialPricePerUnit;
+    const nextFeePricePerUnit =
+      feePricePerUnit ?? itemJobSection.feePricePerUnit;
 
-    if (existingItemJobSection) {
-      throw new HttpException(
-        `Item already exists in this job section`,
-        HttpStatus.CONFLICT,
-      );
+    // Only check duplicates if the name is being changed; otherwise a partial
+    // update (e.g. volume only) should not be blocked by the duplicate check.
+    if (name !== undefined && nextName !== itemJobSection.name) {
+      const existingItemJobSection =
+        await this.prisma.itemJobSection.findFirst({
+          where: {
+            name: nextName,
+            jobSectionId: itemJobSection.jobSectionId,
+            NOT: { id },
+          },
+        });
+
+      if (existingItemJobSection) {
+        throw new HttpException(
+          `Item already exists in this job section`,
+          HttpStatus.CONFLICT,
+        );
+      }
     }
 
-    const totalMaterialPrice = (materialPricePerUnit / minimumVolume) * volume;
-    const totalFeePrice = (feePricePerUnit / minimumVolume) * volume;
+    const totalMaterialPrice =
+      (nextMaterialPricePerUnit / nextMinimumVolume) * nextVolume;
+    const totalFeePrice = (nextFeePricePerUnit / nextMinimumVolume) * nextVolume;
 
     const updateItemJobSection = await this.prisma.itemJobSection.update({
       where: { id },
       data: {
-        name,
-        volume,
-        minimumVolume,
-        materialPricePerUnit,
-        feePricePerUnit,
+        ...(name !== undefined ? { name: nextName } : {}),
+        ...(volume !== undefined ? { volume: nextVolume } : {}),
+        ...(minimumVolume !== undefined
+          ? { minimumVolume: nextMinimumVolume }
+          : {}),
+        ...(materialPricePerUnit !== undefined
+          ? { materialPricePerUnit: nextMaterialPricePerUnit }
+          : {}),
+        ...(feePricePerUnit !== undefined
+          ? { feePricePerUnit: nextFeePricePerUnit }
+          : {}),
         totalMaterialPrice,
         totalFeePrice,
-        unit,
-        information,
+        ...(unit !== undefined ? { unit } : {}),
+        ...(information !== undefined ? { information } : {}),
       },
     });
 

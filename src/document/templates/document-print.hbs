@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{name}} - Owner Estimate</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @page {
+      size: A4 landscape;
+      margin: 10mm;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #1f2937;
+      background: #ffffff;
+      padding: 10mm;
+    }
+
+    .container {
+      max-width: 100%;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #3b82f6;
+    }
+
+    .header h1 {
+      font-size: 16pt;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 4px;
+    }
+
+    .header .subtitle {
+      font-size: 10pt;
+      color: #6b7280;
+    }
+
+    /* Document Info */
+    .document-info {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 16px;
+      padding: 10px 16px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .info-item {
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 8pt;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .info-value {
+      font-size: 9pt;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    /* Table Styles */
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #1e40af;
+      padding: 6px 10px;
+      background: #eff6ff;
+      border-left: 3px solid #3b82f6;
+      margin-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8pt;
+    }
+
+    thead th {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 7pt;
+      letter-spacing: 0.3px;
+      padding: 8px 6px;
+      text-align: left;
+      border-bottom: 2px solid #cbd5e1;
+    }
+
+    thead th.text-right {
+      text-align: right;
+    }
+
+    thead th.text-center {
+      text-align: center;
+    }
+
+    tbody td {
+      padding: 6px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    tbody tr:hover {
+      background: #f1f5f9;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .currency {
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 8pt;
+    }
+
+    /* Section Total */
+    .section-total {
+      display: flex;
+      justify-content: flex-end;
+      gap: 24px;
+      padding: 8px 10px;
+      background: #f1f5f9;
+      border-radius: 4px;
+      margin-top: 6px;
+    }
+
+    .section-total-item {
+      text-align: right;
+    }
+
+    .section-total-label {
+      font-size: 7pt;
+      color: #6b7280;
+      text-transform: uppercase;
+    }
+
+    .section-total-value {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #1e40af;
+    }
+
+    /* Grand Total */
+    .grand-total {
+      text-align: right;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+      border-radius: 6px;
+      margin: 16px 0;
+    }
+
+    .grand-total-label {
+      font-size: 9pt;
+      opacity: 0.9;
+      margin-bottom: 2px;
+    }
+
+    .grand-total-value {
+      font-size: 14pt;
+      font-weight: 700;
+    }
+
+    /* Signatures */
+    .signatures {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+      page-break-inside: avoid;
+    }
+
+    .signature-box {
+      width: 28%;
+      text-align: center;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
+    .signature-title {
+      font-size: 8pt;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .signature-name {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+
+    .signature-position {
+      font-size: 8pt;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .signature-date {
+      font-size: 7pt;
+      color: #9ca3af;
+    }
+
+    /* QR Code Section */
+    .qr-section {
+      position: fixed;
+      bottom: 10mm;
+      right: 10mm;
+      text-align: center;
+      padding: 8px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .qr-code {
+      width: 70px;
+      height: 70px;
+    }
+
+    .qr-label {
+      font-size: 6pt;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 7pt;
+      color: #9ca3af;
+    }
+
+    /* No items message */
+    .no-items {
+      text-align: center;
+      padding: 16px;
+      color: #9ca3af;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>{{name}}</h1>
+      <div class="subtitle">Rencana Anggaran Biaya (RAB)</div>
+    </div>
+
+    <!-- Document Info -->
+    <div class="document-info">
+      <div class="info-item">
+        <div class="info-label">Pekerjaan</div>
+        <div class="info-value">{{job}}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Lokasi</div>
+        <div class="info-value">{{location}}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Dasar</div>
+        <div class="info-value">{{base}}</div>
+      </div>
+    </div>
+
+    <!-- Job Sections -->
+    {{#each jobSections}}
+    <div class="section">
+      <div class="section-title">{{this.name}}</div>
+      
+      {{#if this.itemJobSections.length}}
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 5%">No</th>
+            <th style="width: 30%">Uraian Pekerjaan</th>
+            <th style="width: 8%" class="text-center">Volume</th>
+            <th style="width: 8%" class="text-center">Satuan</th>
+            <th style="width: 12%" class="text-right">Harga Material/Unit</th>
+            <th style="width: 12%" class="text-right">Harga Upah/Unit</th>
+            <th style="width: 12%" class="text-right">Total Material</th>
+            <th style="width: 12%" class="text-right">Total Upah</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each this.itemJobSections}}
+          <tr>
+            <td class="text-center">{{addOne @index}}</td>
+            <td>{{this.name}}</td>
+            <td class="text-center">{{formatNumber this.volume}}</td>
+            <td class="text-center">{{this.unit}}</td>
+            <td class="text-right currency">{{formatCurrency this.materialPricePerUnit}}</td>
+            <td class="text-right currency">{{formatCurrency this.feePricePerUnit}}</td>
+            <td class="text-right currency">{{formatCurrency this.totalMaterialPrice}}</td>
+            <td class="text-right currency">{{formatCurrency this.totalFeePrice}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <div class="section-total">
+        <div class="section-total-item">
+          <div class="section-total-label">Total Material</div>
+          <div class="section-total-value currency">{{formatCurrency this.totalMaterialPrice}}</div>
+        </div>
+        <div class="section-total-item">
+          <div class="section-total-label">Total Upah</div>
+          <div class="section-total-value currency">{{formatCurrency this.totalFeePrice}}</div>
+        </div>
+      </div>
+      {{else}}
+      <div class="no-items">Belum ada item pekerjaan</div>
+      {{/if}}
+    </div>
+    {{/each}}
+
+    <!-- Grand Total -->
+    <div class="grand-total">
+      <div class="grand-total-label">TOTAL KESELURUHAN</div>
+      <div class="grand-total-value">{{formatCurrency totalPrice}}</div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signatures">
+      <div class="signature-box">
+        <div class="signature-title">Dibuat Oleh</div>
+        <div class="signature-name">{{createdBy.name}}</div>
+        <div class="signature-position">{{createdBy.position}}</div>
+        <div class="signature-date">{{formatDate createdAt}}</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Diperiksa Oleh</div>
+        <div class="signature-name">{{checkedBy.name}}</div>
+        <div class="signature-position">{{checkedBy.position}}</div>
+        <div class="signature-date">{{formatDate checkedAt}}</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Disetujui Oleh</div>
+        <div class="signature-name">{{confirmedBy.name}}</div>
+        <div class="signature-position">{{confirmedBy.position}}</div>
+        <div class="signature-date">{{formatDate confirmedAt}}</div>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="qr-section">
+      <img class="qr-code" src="{{qrCodeDataUrl}}" alt="QR Verification" />
+      <div class="qr-label">Scan untuk verifikasi</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div>Dicetak pada: {{formatDate printedAt}}</div>
+      <div>Owner Estimate System</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import PDFDocument = require('pdfkit');
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { chromium, Browser } from 'playwright';
+import * as Handlebars from 'handlebars';
+import * as fs from 'fs';
+import * as path from 'path';
 import { QRCodeService } from './qrcode.service';
 
-interface DocumentData {
+export interface DocumentData {
   name: string;
   createdAt: Date;
   updatedAt: Date;
@@ -42,173 +44,150 @@ interface DocumentData {
 }
 
 @Injectable()
-export class PDFService {
-  constructor(private qrcodeService: QRCodeService) {}
+export class PDFService implements OnModuleDestroy {
+  private browser: Browser | null = null;
+  private template: Handlebars.TemplateDelegate | null = null;
 
+  constructor(private qrcodeService: QRCodeService) {
+    this.registerHandlebarsHelpers();
+    this.loadTemplate();
+  }
+
+  /**
+   * Register Handlebars helpers for formatting
+   */
+  private registerHandlebarsHelpers(): void {
+    // Format currency to Indonesian Rupiah
+    Handlebars.registerHelper('formatCurrency', (amount: number) => {
+      if (typeof amount !== 'number' || isNaN(amount)) {
+        return 'Rp 0';
+      }
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    });
+
+    // Format date to Indonesian locale
+    Handlebars.registerHelper('formatDate', (date: Date) => {
+      if (!date) return '-';
+      return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+      }).format(new Date(date));
+    });
+
+    // Format number with thousand separator
+    Handlebars.registerHelper('formatNumber', (num: number) => {
+      if (typeof num !== 'number' || isNaN(num)) {
+        return '0';
+      }
+      return new Intl.NumberFormat('id-ID', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(num);
+    });
+
+    // Add one to index (for numbering starting from 1)
+    Handlebars.registerHelper('addOne', (index: number) => {
+      return index + 1;
+    });
+  }
+
+  /**
+   * Load and compile the Handlebars template
+   */
+  private loadTemplate(): void {
+    const templatePath = path.join(
+      __dirname,
+      'templates',
+      'document-print.hbs',
+    );
+    const templateSource = fs.readFileSync(templatePath, 'utf-8');
+    this.template = Handlebars.compile(templateSource);
+  }
+
+  /**
+   * Get or create browser instance (lazy initialization)
+   */
+  private async getBrowser(): Promise<Browser> {
+    if (!this.browser) {
+      this.browser = await chromium.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+        ],
+      });
+    }
+    return this.browser;
+  }
+
+  /**
+   * Cleanup browser on module destroy
+   */
+  async onModuleDestroy(): Promise<void> {
+    if (this.browser) {
+      await this.browser.close();
+      this.browser = null;
+    }
+  }
+
+  /**
+   * Generate PDF document using Playwright
+   */
   async generateDocumentPDF(
     documentData: DocumentData,
     documentSlug: string,
   ): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const run = async () => {
-        try {
-          const doc = new PDFDocument({
-            size: 'A4',
-            margins: { top: 50, bottom: 50, left: 50, right: 50 },
-          });
+    // Generate QR Code as Data URL
+    const qrCodeDataUrl =
+      await this.qrcodeService.generateQRCode(documentSlug);
 
-          const chunks: Buffer[] = [];
-          doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-          doc.on('end', () => resolve(Buffer.concat(chunks)));
-          doc.on('error', (error) =>
-            reject(error instanceof Error ? error : new Error(String(error))),
-          );
+    // Prepare template data
+    const templateData = {
+      ...documentData,
+      qrCodeDataUrl,
+      printedAt: new Date(),
+    };
 
-          // Header
-          doc
-            .fontSize(18)
-            .font('Helvetica-Bold')
-            .text(documentData.name, { align: 'center' });
-          doc.moveDown(0.5);
+    // Render HTML from template
+    if (!this.template) {
+      this.loadTemplate();
+    }
+    const html = this.template!(templateData);
 
-          // Document Info
-          doc.fontSize(10).font('Helvetica');
-          doc.text(`Pekerjaan: ${documentData.job}`);
-          doc.text(`Lokasi: ${documentData.location}`);
-          doc.text(`Dasar: ${documentData.base}`);
-          doc.moveDown();
+    // Generate PDF using Playwright
+    const browser = await this.getBrowser();
+    const context = await browser.newContext();
+    const page = await context.newPage();
 
-          // Document Details Table
-          doc
-            .fontSize(12)
-            .font('Helvetica-Bold')
-            .text('Rincian Dokumen', { underline: true });
-          doc.moveDown(0.5);
-          doc.fontSize(9).font('Helvetica');
+    try {
+      // Set HTML content
+      await page.setContent(html, {
+        waitUntil: 'networkidle',
+      });
 
-          // Loop through job sections
-          for (const section of documentData.jobSections) {
-            doc.fontSize(10).font('Helvetica-Bold').text(section.name);
-            doc.fontSize(9).font('Helvetica');
+      // Generate PDF
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        landscape: true,
+        printBackground: true,
+        margin: {
+          top: '10mm',
+          bottom: '10mm',
+          left: '10mm',
+          right: '10mm',
+        },
+      });
 
-            // Table headers
-            const startY = doc.y;
-            doc.text('Item', 50, startY);
-            doc.text('Volume', 250, startY);
-            doc.text('Satuan', 300, startY);
-            doc.text('Harga Material', 350, startY);
-            doc.text('Harga Upah', 450, startY);
-            doc.moveDown();
-
-            // Table content
-            for (const item of section.itemJobSections) {
-              const itemY = doc.y;
-              doc.text(item.name, 50, itemY, { width: 180 });
-              doc.text(item.volume.toString(), 250, itemY);
-              doc.text(item.unit, 300, itemY);
-              doc.text(
-                this.formatCurrency(item.totalMaterialPrice),
-                350,
-                itemY,
-              );
-              doc.text(this.formatCurrency(item.totalFeePrice), 450, itemY);
-              doc.moveDown(0.5);
-
-              // Check if we need a new page
-              if (doc.y > 700) {
-                doc.addPage();
-              }
-            }
-
-            doc.fontSize(9).font('Helvetica-Bold');
-            doc.text(
-              `Total Material: ${this.formatCurrency(section.totalMaterialPrice)}`,
-              350,
-            );
-            doc.text(
-              `Total Upah: ${this.formatCurrency(section.totalFeePrice)}`,
-              350,
-            );
-            doc.moveDown();
-          }
-
-          // Total Price
-          doc.fontSize(12).font('Helvetica-Bold');
-          doc.text(
-            `Total Harga: ${this.formatCurrency(documentData.totalPrice)}`,
-            { align: 'right' },
-          );
-          doc.moveDown();
-
-          // Approval Information
-          doc
-            .fontSize(10)
-            .font('Helvetica-Bold')
-            .text('Informasi Persetujuan', { underline: true });
-          doc.moveDown(0.5);
-          doc.fontSize(9).font('Helvetica');
-
-          doc.text(
-            `Dibuat oleh: ${documentData.createdBy.name} (${documentData.createdBy.position})`,
-          );
-          doc.text(
-            `Tanggal dibuat: ${this.formatDate(documentData.createdAt)}`,
-          );
-          doc.moveDown(0.5);
-
-          doc.text(
-            `Diperiksa oleh: ${documentData.checkedBy.name} (${documentData.checkedBy.position})`,
-          );
-          doc.text(
-            `Tanggal diperiksa: ${this.formatDate(documentData.checkedAt)}`,
-          );
-          doc.moveDown(0.5);
-
-          doc.text(
-            `Dikonfirmasi oleh: ${documentData.confirmedBy.name} (${documentData.confirmedBy.position})`,
-          );
-          doc.text(
-            `Tanggal dikonfirmasi: ${this.formatDate(documentData.confirmedAt)}`,
-          );
-          doc.moveDown();
-
-          // Generate QR Code
-          const qrCodeBuffer =
-            await this.qrcodeService.generateQRCodeBuffer(documentSlug);
-
-          // Add QR Code at bottom right
-          const pageWidth = doc.page.width;
-          const pageHeight = doc.page.height;
-          const qrSize = 100;
-          const qrX = pageWidth - qrSize - 50;
-          const qrY = pageHeight - qrSize - 50;
-
-          doc.image(qrCodeBuffer, qrX, qrY, {
-            width: qrSize,
-            height: qrSize,
-          });
-          doc.end();
-        } catch (error) {
-          reject(error instanceof Error ? error : new Error(String(error)));
-        }
-      };
-
-      void run();
-    });
-  }
-
-  private formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  }
-
-  private formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('id-ID', {
-      dateStyle: 'long',
-      timeStyle: 'short',
-    }).format(new Date(date));
+      return Buffer.from(pdfBuffer);
+    } finally {
+      await context.close();
+    }
   }
 }

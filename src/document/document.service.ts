@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PDFDocument as PdfLibDocument } from 'pdf-lib';
 import { DocumentStatus } from '@prisma/client';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
@@ -792,71 +791,6 @@ export class DocumentService {
     };
 
     return await this.pdfService.generateDocumentPDF(documentData, slug);
-  }
-
-  /**
-   * Attach QR code to a PDF generated from the frontend UI
-   */
-  async attachQrToPdf(
-    slug: string,
-    userId: number,
-    pdfBuffer: Buffer,
-  ): Promise<Buffer> {
-    const document = await this.prisma.document.findUnique({
-      where: { slug },
-      include: {
-        createdBy: { select: documentUserSelect },
-        checkedBy: { select: documentUserSelect },
-        confirmedBy: { select: documentUserSelect },
-      },
-    });
-
-    if (!document) {
-      throw new HttpException('Document not found', HttpStatus.NOT_FOUND);
-    }
-
-    const canAccess =
-      document.createdById === userId ||
-      document.checkedById === userId ||
-      document.confirmedById === userId;
-
-    if (!canAccess) {
-      throw new HttpException(
-        'You do not have permission to access this document',
-        HttpStatus.FORBIDDEN,
-      );
-    }
-
-    if (document.status !== DocumentStatus.APPROVED) {
-      throw new HttpException(
-        'Document must be approved before generating PDF',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!pdfBuffer?.length) {
-      throw new HttpException('PDF buffer is empty', HttpStatus.BAD_REQUEST);
-    }
-
-    const pdfDoc = await PdfLibDocument.load(pdfBuffer);
-    const qrCodeBuffer = await this.qrcodeService.generateQRCodeBuffer(slug);
-    const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
-
-    const pages = pdfDoc.getPages();
-    const page = pages[pages.length - 1];
-    const { width, height } = page.getSize();
-    const qrSize = Math.min(width, height) * 0.15;
-    const margin = 24;
-
-    page.drawImage(qrImage, {
-      x: width - qrSize - margin,
-      y: margin,
-      width: qrSize,
-      height: qrSize,
-    });
-
-    const pdfBytes = await pdfDoc.save();
-    return Buffer.from(pdfBytes);
   }
 
   /**

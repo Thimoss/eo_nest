@@ -111,10 +111,14 @@ export class JobSectionService {
       throw new HttpException('Job section not found', HttpStatus.NOT_FOUND);
     }
 
+    // Check for duplicate job section, but exclude the current one being updated
     const existingJobSection = await this.prisma.jobSection.findFirst({
       where: {
         name: name,
         documentId: documentId,
+        NOT: {
+          id: id, // Exclude the current job section being updated
+        },
       },
     });
 
