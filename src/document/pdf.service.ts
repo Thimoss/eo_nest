@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { chromium, Browser } from 'playwright';
+import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import * as Handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -9,6 +9,7 @@ export interface DocumentData {
   name: string;
   createdAt: Date;
   updatedAt: Date;
+  recapitulationLocation: string;
   createdBy: {
     name: string;
     position: string;
@@ -26,7 +27,12 @@ export interface DocumentData {
   job: string;
   location: string;
   base: string;
+  totalMaterialPrice: number;
+  totalFeePrice: number;
+  totalMaterialAndFee: number;
   totalPrice: number;
+  totalBenefitsAndRisks: number;
+  percentageBenefitsAndRisks: number;
   jobSections: Array<{
     name: string;
     totalMaterialPrice: number;
@@ -39,6 +45,7 @@ export interface DocumentData {
       feePricePerUnit: number;
       totalMaterialPrice: number;
       totalFeePrice: number;
+      information?: string | null;
     }>;
   }>;
 }
@@ -94,6 +101,18 @@ export class PDFService implements OnModuleDestroy {
     Handlebars.registerHelper('addOne', (index: number) => {
       return index + 1;
     });
+
+    // Convert 0-based index to A, B, C... (fallback to number when out of range)
+    Handlebars.registerHelper('alphaIndex', (index: number) => {
+      if (typeof index !== 'number' || isNaN(index) || index < 0) {
+        return '';
+      }
+      const code = 65 + index;
+      if (code >= 65 && code <= 90) {
+        return String.fromCharCode(code);
+      }
+      return index + 1;
+    });
   }
 
   /**
@@ -113,6 +132,16 @@ export class PDFService implements OnModuleDestroy {
    * Get or create browser instance (lazy initialization)
    */
   private async getBrowser(): Promise<Browser> {
+    if (this.browser && !this.browser.isConnected()) {
+      try {
+        await this.browser.close();
+      } catch {
+        // ignore
+      } finally {
+        this.browser = null;
+      }
+    }
+
     if (!this.browser) {
       this.browser = await chromium.launch({
         headless: true,
@@ -125,6 +154,26 @@ export class PDFService implements OnModuleDestroy {
       });
     }
     return this.browser;
+  }
+
+  private async resetBrowser(): Promise<void> {
+    if (!this.browser) return;
+    try {
+      await this.browser.close();
+    } catch {
+      // ignore
+    } finally {
+      this.browser = null;
+    }
+  }
+
+  private isBrowserClosedError(err: unknown): boolean {
+    if (!err || typeof err !== 'object') return false;
+    const message =
+      'message' in err && typeof (err as { message?: unknown }).message === 'string'
+        ? (err as { message: string }).message
+        : '';
+    return message.includes('has been closed') || message.includes('Target page, context or browser has been closed');
   }
 
   /**
@@ -162,11 +211,27 @@ export class PDFService implements OnModuleDestroy {
     const html = this.template!(templateData);
 
     // Generate PDF using Playwright
-    const browser = await this.getBrowser();
-    const context = await browser.newContext();
-    const page = await context.newPage();
+    let context: BrowserContext | null = null;
+    let page: Page | null = null;
 
     try {
+      const browser = await this.getBrowser();
+
+      try {
+        context = await browser.newContext();
+      } catch (err) {
+        // If the cached browser instance was closed unexpectedly, relaunch once.
+        if (this.isBrowserClosedError(err)) {
+          await this.resetBrowser();
+          const freshBrowser = await this.getBrowser();
+          context = await freshBrowser.newContext();
+        } else {
+          throw err;
+        }
+      }
+
+      page = await context.newPage();
+
       // Set HTML content
       await page.setContent(html, {
         waitUntil: 'networkidle',
@@ -187,7 +252,16 @@ export class PDFService implements OnModuleDestroy {
 
       return Buffer.from(pdfBuffer);
     } finally {
-      await context.close();
+      try {
+        await page?.close();
+      } catch {
+        // ignore
+      }
+      try {
+        await context?.close();
+      } catch {
+        // ignore
+      }
     }
   }
 }

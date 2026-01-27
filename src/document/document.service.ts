@@ -778,6 +778,7 @@ export class DocumentService {
       name: document.name,
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,
+      recapitulationLocation: document.recapitulationLocation,
       createdBy: document.createdBy,
       checkedBy: document.checkedBy,
       confirmedBy: document.confirmedBy,
@@ -786,7 +787,12 @@ export class DocumentService {
       job: document.job,
       location: document.location,
       base: document.base,
+      totalMaterialPrice: document.totalMaterialPrice,
+      totalFeePrice: document.totalFeePrice,
+      totalMaterialAndFee: document.totalMaterialAndFee,
       totalPrice: document.totalPrice,
+      totalBenefitsAndRisks: document.totalBenefitsAndRisks,
+      percentageBenefitsAndRisks: document.percentageBenefitsAndRisks,
       jobSections: document.jobSections,
     };
 

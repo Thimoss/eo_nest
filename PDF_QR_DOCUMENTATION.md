@@ -154,7 +154,7 @@ src/document/
     .qr-container {
       position: fixed;
       bottom: 15mm;
-      right: 15mm;
+      left: 15mm;
     }
     .qr-code {
       width: 80px;
@@ -467,4 +467,3 @@ CMD ["npm", "run", "start:prod"]
 | **QR Integration** | Post-process attach | Native embed di HTML |
 | **Debugging** | Sulit (multi-step) | Mudah (preview HTML) |
 | **Styling Control** | Limited (html2canvas) | Full CSS support |
-

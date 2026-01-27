@@ -78,6 +78,11 @@
       color: #1f2937;
     }
 
+    .info-value.muted {
+      font-weight: 500;
+      color: #475569;
+    }
+
     /* Table Styles */
     .section {
       margin-bottom: 16px;
@@ -241,7 +246,7 @@
     .qr-section {
       position: fixed;
       bottom: 10mm;
-      right: 10mm;
+      left: 10mm;
       text-align: center;
       padding: 8px;
       background: white;
@@ -279,6 +284,32 @@
       color: #9ca3af;
       font-style: italic;
     }
+
+    /* Recapitulation */
+    .recap {
+      margin-top: 18px;
+      page-break-inside: avoid;
+    }
+
+    .recap-title {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #1e40af;
+      padding: 6px 10px;
+      background: #eff6ff;
+      border-left: 3px solid #3b82f6;
+      margin-bottom: 8px;
+    }
+
+    .recap-table thead th {
+      font-size: 7pt;
+    }
+
+    .recap-row-strong td {
+      background: #eff6ff;
+      font-weight: 700;
+      color: #1e40af;
+    }
   </style>
 </head>
 <body>
@@ -303,6 +334,12 @@
         <div class="info-label">Dasar</div>
         <div class="info-value">{{base}}</div>
       </div>
+      <div class="info-item">
+        <div class="info-label">Lokasi Rekapitulasi</div>
+        <div class="info-value muted">
+          {{#if recapitulationLocation}}{{recapitulationLocation}}{{else}}-{{/if}}
+        </div>
+      </div>
     </div>
 
     <!-- Job Sections -->
@@ -314,14 +351,15 @@
       <table>
         <thead>
           <tr>
-            <th style="width: 5%">No</th>
-            <th style="width: 30%">Uraian Pekerjaan</th>
-            <th style="width: 8%" class="text-center">Volume</th>
-            <th style="width: 8%" class="text-center">Satuan</th>
-            <th style="width: 12%" class="text-right">Harga Material/Unit</th>
-            <th style="width: 12%" class="text-right">Harga Upah/Unit</th>
-            <th style="width: 12%" class="text-right">Total Material</th>
-            <th style="width: 12%" class="text-right">Total Upah</th>
+            <th style="width: 4%">No</th>
+            <th style="width: 27%">Uraian Pekerjaan</th>
+            <th style="width: 7%" class="text-center">Volume</th>
+            <th style="width: 7%" class="text-center">Satuan</th>
+            <th style="width: 11%" class="text-right">Harga Material/Unit</th>
+            <th style="width: 11%" class="text-right">Harga Upah/Unit</th>
+            <th style="width: 11%" class="text-right">Total Material</th>
+            <th style="width: 11%" class="text-right">Total Upah</th>
+            <th style="width: 11%">Informasi</th>
           </tr>
         </thead>
         <tbody>
@@ -335,6 +373,7 @@
             <td class="text-right currency">{{formatCurrency this.feePricePerUnit}}</td>
             <td class="text-right currency">{{formatCurrency this.totalMaterialPrice}}</td>
             <td class="text-right currency">{{formatCurrency this.totalFeePrice}}</td>
+            <td>{{#if this.information}}{{this.information}}{{else}}-{{/if}}</td>
           </tr>
           {{/each}}
         </tbody>
@@ -356,10 +395,59 @@
     </div>
     {{/each}}
 
-    <!-- Grand Total -->
-    <div class="grand-total">
-      <div class="grand-total-label">TOTAL KESELURUHAN</div>
-      <div class="grand-total-value">{{formatCurrency totalPrice}}</div>
+    <!-- Recapitulation (match UI) -->
+    <div class="recap">
+      <div class="recap-title">Rekapitulasi</div>
+      <table class="recap-table">
+        <thead>
+          <tr>
+            <th style="width: 8%">Kode</th>
+            <th>Uraian</th>
+            <th style="width: 18%" class="text-right">Total Material</th>
+            <th style="width: 18%" class="text-right">Total Jasa</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each jobSections}}
+          <tr>
+            <td class="text-center">{{alphaIndex @index}}</td>
+            <td>{{this.name}}</td>
+            <td class="text-right currency">{{formatCurrency this.totalMaterialPrice}}</td>
+            <td class="text-right currency">{{formatCurrency this.totalFeePrice}}</td>
+          </tr>
+          {{/each}}
+
+          <tr class="recap-row-strong">
+            <td></td>
+            <td>TOTAL MATERIAL</td>
+            <td class="text-right currency">{{formatCurrency totalMaterialPrice}}</td>
+            <td></td>
+          </tr>
+          <tr class="recap-row-strong">
+            <td></td>
+            <td>TOTAL JASA</td>
+            <td></td>
+            <td class="text-right currency">{{formatCurrency totalFeePrice}}</td>
+          </tr>
+          <tr class="recap-row-strong">
+            <td></td>
+            <td>TOTAL MATERIAL + JASA</td>
+            <td colspan="2" class="text-right currency">{{formatCurrency totalMaterialAndFee}}</td>
+          </tr>
+          <tr class="recap-row-strong">
+            <td></td>
+            <td>K&amp;R (KEUNTUNGAN &amp; RESIKO)</td>
+            <td colspan="2" class="text-right currency">
+              {{formatNumber percentageBenefitsAndRisks}}% — {{formatCurrency totalBenefitsAndRisks}}
+            </td>
+          </tr>
+          <tr class="recap-row-strong">
+            <td></td>
+            <td>TOTAL MATERIAL + JASA + K&amp;R</td>
+            <td colspan="2" class="text-right currency">{{formatCurrency totalPrice}}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Signatures -->
