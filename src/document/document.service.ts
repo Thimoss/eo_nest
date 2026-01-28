@@ -773,6 +773,55 @@ export class DocumentService {
       );
     }
 
+    // Calculate totals on the fly (same logic as findOne)
+    for (const jobSection of document.jobSections) {
+      const totalMaterialPriceJob = jobSection.itemJobSections.reduce(
+        (total, item) => {
+          return total + item.totalMaterialPrice;
+        },
+        0,
+      );
+
+      const totalFeePriceJob = jobSection.itemJobSections.reduce(
+        (total, item) => {
+          return total + item.totalFeePrice;
+        },
+        0,
+      );
+
+      // Update total for JobSection
+      jobSection.totalMaterialPrice = totalMaterialPriceJob;
+      jobSection.totalFeePrice = totalFeePriceJob;
+    }
+
+    // Calculate totals for Document
+    const totalMaterialPriceDoc = document.jobSections.reduce(
+      (total, section) => {
+        return total + section.totalMaterialPrice;
+      },
+      0,
+    );
+
+    const totalFeePriceDoc = document.jobSections.reduce((total, section) => {
+      return total + section.totalFeePrice;
+    }, 0);
+
+    const totalMaterialAndFeeDoc = totalMaterialPriceDoc + totalFeePriceDoc;
+
+    const percentage = document.percentageBenefitsAndRisks;
+    // Default to 0 if not set, though findOne throws error.
+    // generatePDF should probably be safer or consistent.
+    // findOne logic:
+    // if (percentage === undefined || percentage === null) { throw ... }
+    // However, for PDF generation we might want to proceed even if 0?
+    // The original code passed document.percentageBenefitsAndRisks directly.
+    // Let's stick to the logic:
+    const safePercentage = percentage ?? 0;
+
+    const totalBenefitsAndRisksDoc =
+      totalMaterialAndFeeDoc * (safePercentage / 100);
+    const totalPriceDoc = totalMaterialAndFeeDoc + totalBenefitsAndRisksDoc;
+
     // Prepare document data for PDF generation
     const documentData = {
       name: document.name,
@@ -787,11 +836,11 @@ export class DocumentService {
       job: document.job,
       location: document.location,
       base: document.base,
-      totalMaterialPrice: document.totalMaterialPrice,
-      totalFeePrice: document.totalFeePrice,
-      totalMaterialAndFee: document.totalMaterialAndFee,
-      totalPrice: document.totalPrice,
-      totalBenefitsAndRisks: document.totalBenefitsAndRisks,
+      totalMaterialPrice: totalMaterialPriceDoc,
+      totalFeePrice: totalFeePriceDoc,
+      totalMaterialAndFee: totalMaterialAndFeeDoc,
+      totalPrice: totalPriceDoc,
+      totalBenefitsAndRisks: totalBenefitsAndRisksDoc,
       percentageBenefitsAndRisks: document.percentageBenefitsAndRisks,
       jobSections: document.jobSections,
     };
