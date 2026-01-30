@@ -170,10 +170,14 @@ export class PDFService implements OnModuleDestroy {
   private isBrowserClosedError(err: unknown): boolean {
     if (!err || typeof err !== 'object') return false;
     const message =
-      'message' in err && typeof (err as { message?: unknown }).message === 'string'
+      'message' in err &&
+      typeof (err as { message?: unknown }).message === 'string'
         ? (err as { message: string }).message
         : '';
-    return message.includes('has been closed') || message.includes('Target page, context or browser has been closed');
+    return (
+      message.includes('has been closed') ||
+      message.includes('Target page, context or browser has been closed')
+    );
   }
 
   /**
@@ -194,8 +198,7 @@ export class PDFService implements OnModuleDestroy {
     documentSlug: string,
   ): Promise<Buffer> {
     // Generate QR Code as Data URL
-    const qrCodeDataUrl =
-      await this.qrcodeService.generateQRCode(documentSlug);
+    const qrCodeDataUrl = await this.qrcodeService.generateQRCode(documentSlug);
 
     // Prepare template data
     const templateData = {
