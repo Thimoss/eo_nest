@@ -17,15 +17,19 @@ export class UsersService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
 
   async onModuleInit() {
+    const adminEmail = process.env.ADMIN_DEFAULT_EMAIL || 'admin@example.com';
+    const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD;
+    const shouldForceResetAdminPassword =
+      process.env.ADMIN_FORCE_RESET_PASSWORD === 'true';
+
     const adminExists = await this.prisma.user.findFirst({
       where: { role: UserRole.ADMIN, deletedAt: null },
     });
 
     if (!adminExists) {
-      const adminPassword = process.env.ADMIN_DEFAULT_PASSWORD;
       if (!adminPassword) {
         throw new HttpException(
-          'USER_DEFAULT_PASSWORD is not set in environment variables',
+          'ADMIN_DEFAULT_PASSWORD is not set in environment variables',
           HttpStatus.INTERNAL_SERVER_ERROR, // Internal Server Error karena konfigurasi yang hilang
         );
       }
@@ -34,12 +38,30 @@ export class UsersService implements OnModuleInit {
 
       await this.prisma.user.create({
         data: {
-          email: 'admin@example.com',
+          email: adminEmail,
           password: hashedPassword,
           name: 'Admin Default',
           phoneNumber: '1234567890',
           position: 'Administrator',
           role: UserRole.ADMIN,
+        },
+      });
+    }
+
+    if (adminExists && shouldForceResetAdminPassword) {
+      if (!adminPassword) {
+        throw new HttpException(
+          'ADMIN_DEFAULT_PASSWORD is not set in environment variables',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+      await this.prisma.user.update({
+        where: { id: adminExists.id },
+        data: {
+          password: hashedPassword,
         },
       });
     }

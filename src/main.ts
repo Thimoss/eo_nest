@@ -9,9 +9,10 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-    'http://localhost:3000',
-    'https://my.owner-estimate.web.id'
-  ],
+      'http://localhost:3000',
+      'https://my.owner-estimate.web.id',
+      'https://eo-next-project.vercel.app',
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Metode HTTP yang diizinkan
     credentials: true, // Jika perlu mengizinkan cookies dan credentials
   });

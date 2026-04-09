@@ -22,6 +22,7 @@ Notes
 - Default admin is created at startup if none exists.
   - Email: `admin@example.com`
   - Password: `ADMIN_DEFAULT_PASSWORD` from `.env`
+- If admin password in DB is unknown, set `ADMIN_FORCE_RESET_PASSWORD=true` once, restart app, then set back to `false`.
 - Default password for newly created users: `USER_DEFAULT_PASSWORD` from `.env`
 - User delete is soft delete (`deletedAt` set). Deleted users are hidden from list and cannot login.
 
@@ -65,7 +66,7 @@ Example
 ```bash
 curl -X POST "http://localhost:3002/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"Admin123Password"}'
+  -d '{"email":"admin@example.com","password":"admin123"}'
 ```
 
 Response

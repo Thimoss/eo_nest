@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
@@ -21,17 +26,22 @@ export class AuthService {
 
   async signIn(loginData: LoginUserDto): Promise<LoginResponseDto> {
     const { email, password } = loginData;
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Mencari user berdasarkan email
     const user = await this.prisma.user.findFirst({
       where: {
-        email,
+        email: {
+          equals: normalizedEmail,
+          mode: 'insensitive',
+        },
         deletedAt: null,
       },
     });
 
     // Jika user tidak ditemukan atau password tidak cocok, lempar UnauthorizedException
     if (!user || !(await compare(password, user.password))) {
-      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+      throw new UnauthorizedException('Email atau password salah');
     }
 
     const payload = { sub: user.id, email: user.email, role: user.role };
